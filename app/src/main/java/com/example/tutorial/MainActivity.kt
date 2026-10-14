@@ -25,6 +25,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,9 +38,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.tutorial.network.RetrofitClient
 import com.example.tutorial.ui.theme.TutorialTheme
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 private val AzulPrincipal = Color(0xFF1565C0)
+private const val LOG_TAG = "Tutorial"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +75,9 @@ private fun TutorialApp() {
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // No se guarda entre recreaciones: al salir de la pantalla se cancela la consulta.
+    var cargando by remember { mutableStateOf(false) }
 
     // Al cambiar este estado, Compose actualiza el contador en pantalla.
     // rememberSaveable conserva el valor al girar el teléfono.
@@ -115,12 +124,42 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                 fontWeight = FontWeight.Medium
             )
 
-            // Botón 1: muestra un mensaje breve en el dispositivo.
+            // Botón 1: consulta JSONPlaceholder y muestra el resultado en Toast y Logcat.
             Button(
                 onClick = {
-                    Toast.makeText(context, "¡Hola, $name!", Toast.LENGTH_SHORT).show()
-                    Log.d("Tutorial", "Botón Saludar presionado")
+                    if (!cargando) {
+                        cargando = true
+                        Log.d(LOG_TAG, "Botón Consultar API presionado: GET /posts/1")
+
+                        scope.launch {
+                            try {
+                                val post = RetrofitClient.api.getPost(1)
+
+                                Log.i(LOG_TAG, "JSONPlaceholder respondió: publicación ${post.id}")
+                                Log.d(LOG_TAG, "ID: ${post.id}")
+                                Log.d(LOG_TAG, "Usuario: ${post.userId}")
+                                Log.d(LOG_TAG, "Título: ${post.title}")
+                                Log.d(LOG_TAG, "Contenido: ${post.body}")
+
+                                Toast.makeText(context, post.title, Toast.LENGTH_LONG).show()
+                            } catch (e: CancellationException) {
+                                // La cancelación al cerrar o girar la pantalla no es un error de red.
+                                Log.d(LOG_TAG, "Consulta cancelada al salir de la pantalla")
+                                throw e
+                            } catch (e: Exception) {
+                                Log.e(LOG_TAG, "Error al consultar JSONPlaceholder", e)
+                                Toast.makeText(
+                                    context,
+                                    "No se pudo cargar la publicación. Intentá de nuevo.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } finally {
+                                cargando = false
+                            }
+                        }
+                    }
                 },
+                enabled = !cargando,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
@@ -128,14 +167,19 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                     contentColor = Color.White
                 )
             ) {
-                Text("Saludar", fontSize = 18.sp)
+                Text(if (cargando) "Consultando..." else "Consultar API", fontSize = 18.sp)
             }
 
-            // Botón 2: suma un clic y muestra el nuevo total.
+            // Botón 2: acción local, con contador, Toast y Logcat.
             Button(
                 onClick = {
                     contador += 1
-                    Log.d("Tutorial", "Contador: $contador")
+                    Log.d(LOG_TAG, "Botón Sumar un clic presionado. Contador: $contador")
+                    Toast.makeText(
+                        context,
+                        "¡Clic registrado! Total: $contador",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
                 shape = RoundedCornerShape(50),
