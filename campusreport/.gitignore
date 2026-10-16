@@ -1,0 +1,11 @@
+.gradle/
+**/build/
+**/target/
+/backend/data/
+local.properties
+**/local.properties
+.idea/
+*.iml
+.settings/
+.classpath
+.project

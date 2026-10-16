@@ -1,0 +1,38 @@
+{
+  "lugares": [
+    {
+      "id": 1,
+      "nombre": "Aula 1"
+    },
+    {
+      "id": 2,
+      "nombre": "Biblioteca"
+    },
+    {
+      "id": 3,
+      "nombre": "Laboratorio"
+    },
+    {
+      "id": 4,
+      "nombre": "Patio"
+    }
+  ],
+  "categorias": [
+    {
+      "id": 1,
+      "nombre": "Electricidad"
+    },
+    {
+      "id": 2,
+      "nombre": "Mobiliario"
+    },
+    {
+      "id": 3,
+      "nombre": "Limpieza"
+    },
+    {
+      "id": 4,
+      "nombre": "Otros"
+    }
+  ]
+}
