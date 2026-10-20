@@ -1,0 +1,13 @@
+<resources>
+    <string name="inicio">Inicio</string>
+    <string name="lugares">Lugares</string>
+    <string name="categorias">Categorías</string>
+    <string name="reportes">Reportes</string>
+    <string name="nuevo_reporte">Nuevo reporte</string>
+    <string name="detalle_reporte">Detalle del reporte</string>
+    <string name="guardar">Guardar</string>
+    <string name="actualizar">Actualizar</string>
+    <string name="volver">Volver</string>
+    <string name="reporte_anonimo">Reporte anónimo</string>
+    <string name="tu_nombre">Tu nombre</string>
+</resources>

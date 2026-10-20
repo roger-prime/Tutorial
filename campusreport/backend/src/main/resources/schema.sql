@@ -14,3 +14,7 @@ CREATE TABLE IF NOT EXISTS reporte (
     fecha_creacion VARCHAR(40) NOT NULL,
     CHECK (CHAR_LENGTH(TRIM(descripcion)) BETWEEN 10 AND 500)
 );
+
+-- Migración aditiva: preserva los registros de instalaciones existentes.
+ALTER TABLE reporte ADD COLUMN IF NOT EXISTS anonimo BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE reporte ADD COLUMN IF NOT EXISTS autor VARCHAR(80);

@@ -34,6 +34,6 @@ class CatalogIntegrationTest {
     @Test void reportTableAndForeignKeysExist() {
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM reporte",Integer.class));
         assertThrows(org.springframework.dao.DataIntegrityViolationException.class,()->
-            jdbc.update("INSERT INTO reporte VALUES('test',999,1,'Una descripción válida','2026-10-16T12:00:00Z')"));
+            jdbc.update("INSERT INTO reporte (uuid,lugar_id,categoria_id,descripcion,fecha_creacion) VALUES('test',999,1,'Una descripción válida','2026-10-16T12:00:00Z')"));
     }
 }

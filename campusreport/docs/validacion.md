@@ -1,47 +1,40 @@
-# Validación de la entrega
+# Validación de CampusReport
 
-Fecha de preparación: 16 de octubre de 2026. Versión: 0.1.0-semana1.
+Actualización: 20 de octubre de 2026. Versión: 0.2.0.
 
 ## Comprobaciones ejecutadas
 
 | Comprobación | Resultado |
 |---|---|
-| Compilación y empaquetado del backend con Maven | BUILD SUCCESS; JAR ejecutable generado |
+| Compilación y empaquetado del backend con Maven | BUILD SUCCESS; JAR 0.2.0 generado |
 | Pruebas de integración del backend | 4 ejecutadas, 0 fallos, 0 errores |
-| Arranque real del JAR con H2 en archivo | Spring Boot iniciado; archivo de base creado |
-| GET /api/catalogo | HTTP 200; cuatro lugares y cuatro categorías |
-| GET /api/lugares y GET /api/categorias | HTTP 200; cuatro elementos por lista |
-| Compilación Android assembleDebug | BUILD SUCCESSFUL; APK de depuración generado |
-| Inspección del APK | Paquete com.example.campusreport, API mínima 26, objetivo 35, actividad inicial e INTERNET declarados |
-| Revisión de documentos | Definición de tres páginas y prototipo de dos páginas renderizados y revisados visualmente |
+| Compilación Android assembleDebug | APK de depuración generado |
+| Pruebas locales Android con Robolectric y SQLite nativo | 4 ejecutadas, 0 fallos, 0 errores |
+| Revisión de documentos Word | Definición y prototipo de tres páginas cada uno, renderizados y revisados visualmente |
 
-Las cuatro pruebas del backend verifican: contrato del catálogo, lectura de una fila nueva desde la base,
-endpoint de categorías y existencia de la tabla de reportes con claves foráneas. No usan un servidor falso
-para responder con datos constantes. La respuesta de la ejecución HTTP está en `evidencias/catalogo-respuesta.json`.
+Las cuatro pruebas del backend verifican el contrato del catálogo, la lectura de una fila nueva desde la base, el endpoint de categorías y las claves foráneas de reportes.
 
-## Pendiente de comprobar en el emulador del equipo
+Las cuatro pruebas locales Android verifican:
 
-No se ejecutó un emulador Android durante esta preparación. Compilar el APK no sustituye estas pruebas:
+- Creación de lugares y categorías sin descarga previa, rechazo de nombres repetidos, persistencia al reabrir y conservación tras actualizar dos veces el catálogo.
+- Guardado anónimo: el nombre queda NULL aunque se proporcione un valor a la función.
+- Guardado con nombre: validación, normalización y lectura del autor.
+- Migración de SQLite de versión 1 a 2: conserva el reporte anterior como anónimo y admite los nuevos registros locales.
 
-- Abrir Inicio y navegar por todas las pantallas.
-- Descargar desde el Spring Boot de la notebook y verificar lugares en pantalla.
-- Consultar SQLite desde Database Inspector.
-- Crear dos reportes sin conexión; cerrar y abrir la app y verificar persistencia.
-- Rotar el formulario y comprobar que conserva el borrador.
-- Repetir una descarga y comprobar que no duplica lugares ni elimina reportes.
-- Detener el backend e intentar descargar: mostrar error y conservar el catálogo anterior.
-- Revisar Toast y Logcat, y tomar capturas reales para la entrega.
+Se ejecutaron con JUnit 4.13.2, Robolectric 4.14.1 y SQLite nativo en SDK 28. Las pruebas usan una base independiente de la aplicación. Las evidencias de HTTP guardadas anteriormente en `evidencias/` corresponden a la revisión del 16 de octubre; no se presentan como una nueva ejecución.
 
-Se incluyen tres pruebas instrumentadas de SQLite para ejecutar con `connectedDebugAndroidTest`:
-persistencia y descarga repetida; reversión de una descarga inválida; validación de descripción corta.
-Estas pruebas usan `campusreport-test.db`, una base independiente de la base de la app.
-Las imágenes del prototipo son diseños de referencia, no evidencia de una ejecución Android.
+## Revisión en el emulador del equipo
 
-## Requisitos académicos que debe completar el equipo
+No se ejecutó un emulador Android durante esta actualización. Queda comprobar visualmente:
 
-- Aprobación del alcance por el profesor.
-- Demostración en vivo y comprensión del código por ambos integrantes.
-- Aportes reales identificables de Roger y Johan en Git. Ver `aportes.md`.
+- Navegar por Inicio, Lugares, Categorías, Nuevo reporte, Reportes y Detalle del reporte.
+- Usar Guardar en Lugares y Categorías; crear un reporte anónimo y otro con nombre.
+- Activar Reporte anónimo y comprobar que Tu nombre se oculta y se vacía.
+- Rotar los formularios y revisar que conservan el borrador.
+- Cerrar y abrir la aplicación y consultar los registros.
+- Ejecutar Spring Boot, pulsar Actualizar y revisar los datos descargados.
+- Revisar los mensajes breves y Logcat.
 
-El envío de reportes y la confirmación de sincronización están previstos para la semana 3 y no se
-presentan como funcionalidades terminadas de esta versión.
+Las tres pruebas instrumentadas anteriores siguen disponibles mediante `connectedDebugAndroidTest`; no se ejecutaron en esta actualización. El prototipo Word es una referencia editable, no una captura de ejecución.
+
+Ambos integrantes deben comprender y demostrar el funcionamiento, y registrar sus aportes reales en Git. Ver `aportes.md`.

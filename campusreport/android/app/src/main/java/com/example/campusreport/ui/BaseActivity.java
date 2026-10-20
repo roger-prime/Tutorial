@@ -46,5 +46,6 @@ public abstract class BaseActivity extends Activity {
         content.addView(b,lp);return b;
     }
     protected void open(Class<?> type) { startActivity(new Intent(this,type)); }
-    protected void backButton() { button("Volver",v->finish()); }
+    protected Button button(int label,View.OnClickListener action) { return button(getString(label),action); }
+    protected void backButton() { button(R.string.volver,v->finish()); }
 }

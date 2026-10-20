@@ -16,7 +16,7 @@ public class CampusApp extends Application {
     private final Handler main=new Handler(Looper.getMainLooper());
     private final CopyOnWriteArraySet<Runnable> listeners=new CopyOnWriteArraySet<>();
     private boolean descargando;
-    private String resultado="Descargá los lugares y categorías para comenzar.";
+    private String resultado="Agregá lugares y categorías o tocá Actualizar.";
     @Override public void onCreate() { super.onCreate();db=new CampusDb(this);db.getWritableDatabase(); }
     public boolean descargando() { return descargando; }
     public String resultado() { return resultado; }
@@ -25,17 +25,17 @@ public class CampusApp extends Application {
     private void avisar() { for(Runnable r:listeners) r.run(); }
     public void descargar() {
         if(descargando) return;
-        descargando=true;resultado="Conectando con Spring Boot…";avisar();
-        Log.d("CampusReport","Botón Descargar presionado: GET /api/catalogo");
+        descargando=true;resultado="Actualizando lugares y categorías…";avisar();
+        Log.d("CampusReport","Botón Actualizar presionado: GET /api/catalogo");
         io.execute(()->{
             String message;
             try {
                 db.guardarCatalogo(ApiClient.descargarCatalogo());
-                message="Descarga completa. "+db.lugares().size()+" lugares disponibles sin internet.";
+                message="Lugares y categorías actualizados.";
                 Log.i("CampusReport",message);
             } catch(Exception e) {
                 Log.e("CampusReport","Falló la descarga. Se conservan los datos locales.",e);
-                message="No se pudo descargar. Verificá Spring Boot en el puerto 8080. Tus datos locales siguen disponibles.";
+                message="No pudimos actualizar. Podés seguir usando tus datos guardados.";
             }
             final String text=message;
             main.post(()->{descargando=false;resultado=text;avisar();});

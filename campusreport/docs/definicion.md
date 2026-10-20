@@ -1,82 +1,106 @@
 # Definición de CampusReport
 
-Proyecto Práctico TIC · Semana 1 · Equipo Roger y Johan · 16 de octubre de 2026
+Proyecto Práctico TIC · Roger y Johan · Actualización del 20 de octubre de 2026
 
 ## Problema y objetivo
 
-En la facultad, los desperfectos de aulas y espacios comunes pueden comunicarse de manera informal,
-lo que dificulta conservar un registro. CampusReport propone registrar problemas de mantenimiento
-en Android, aun sin conexión, y centralizarlos mediante sincronización con un servidor.
-Este problema es la hipótesis del proyecto académico, no el resultado de una investigación de campo.
-El alcance debe ser aprobado por el docente.
+Los desperfectos de aulas y espacios comunes pueden comunicarse de manera informal y quedar sin registro. CampusReport permite registrar problemas de mantenimiento de la facultad, organizar los lugares y las categorías y consultar lo guardado, incluso sin conexión.
 
-## Usuarios y alcance
+## Usuarios
 
-Alumnos, docentes y personal que detectan desperfectos. La primera versión no requiere cuentas de usuario:
-Mis reportes corresponde a registros guardados en ese dispositivo, no a una cuenta compartida.
+Alumnos, docentes y personal de la facultad. La aplicación permite registrar un reporte anónimo o indicar un nombre. Los registros pertenecen al dispositivo utilizado; no hace falta crear una cuenta.
 
-Incluido en el producto de cuatro semanas: descargar lugares y categorías; consultarlos desde SQLite;
-crear reportes con descripción válida y UUID estable; consultar listado y detalle; enviar registros
-pendientes manualmente; descargar novedades y evitar duplicados por UUID en el servidor.
+## Funcionalidades de la aplicación
 
-Excluido: login, fotografías, GPS, notificaciones push, chat, asignación de técnicos, seguimiento de
-reparaciones, edición o eliminación de información compartida. Sincronizado no significa reparado.
+- Lugares: escribir un nombre, guardarlo y consultar la lista de lugares.
 
-## Información descargada y registros offline
+- Categorías: escribir un nombre, guardarlo y consultar la lista de categorías.
 
-El servidor entrega lugares (ID y nombre) y categorías (ID y nombre). Android los guarda en SQLite
-antes de mostrarlos. Sin internet se generan reportes nuevos: UUID, lugar, categoría, descripción y
-fecha de creación. Un campo local marca si el servidor confirmó su recepción. En la semana 1 todos
-los reportes quedan pendientes; no existe todavía un endpoint de envío.
+- Nuevo reporte: seleccionar un lugar y una categoría, describir el problema y guardar el reporte.
 
-## Arquitectura
+- Reporte anónimo: elegir si se guarda sin nombre o con el nombre indicado por la persona.
 
-Android nativo en Java con Views y XML, SQLiteOpenHelper para persistencia local y HttpURLConnection
-en un ExecutorService para red. Spring Boot en Java 17 expone REST JSON; JdbcTemplate consulta una
-base H2 persistente en archivo, alojada en la máquina que ejecuta el servidor. H2 no es la SQLite del teléfono.
-El emulador accede al backend local mediante http://10.0.2.2:8080. HTTP se limita a los hosts de desarrollo;
-un despliegue externo requeriría HTTPS y revisar autenticación y acceso.
+- Reportes: consultar los registros guardados y abrir el detalle de cada uno.
 
-Flujo: servidor H2 → API REST → descarga Android → transacción SQLite → consultas de pantalla.
-El flujo de escritura previsto: formulario → reporte SQLite pendiente → POST futuro → confirmación
-del servidor → marcado local. Ante error se conserva el pendiente y se reintenta con el mismo UUID.
+- Actualizar: incorporar los lugares y las categorías disponibles en el servidor.
+
+- Conservar los datos guardados para consultarlos después de cerrar y abrir la aplicación.
+
+## Una forma sencilla de usarla
+
+La persona entra en Lugares y guarda “Laboratorio”. Después entra en Categorías y guarda “Electricidad”. En Nuevo reporte selecciona esos datos, describe el problema, elige si desea identificarse y pulsa Guardar. El registro aparece en Reportes.
+
+## Identificación del autor
+
+La opción Reporte anónimo está activada inicialmente. Si se mantiene activada, no se guarda el nombre y el detalle muestra “Anónimo”. Si se desactiva, aparece Tu nombre y es obligatorio completarlo. Es un nombre declarado por el usuario, no una identidad verificada.
+
+# Arquitectura y datos
+
+La interfaz utiliza palabras cotidianas. La organización técnica mantiene separadas las pantallas, el almacenamiento del teléfono y la comunicación con el servidor.
+
+| Componente | Tecnología y función |
+| --- | --- |
+| Aplicación Android | Java, Views y XML para las pantallas, los formularios y la navegación. |
+| Base del dispositivo | SQLite para guardar lugares, categorías y reportes. |
+| Comunicación | API REST con JSON; las operaciones de red se ejecutan fuera del hilo principal. |
+| Servidor | Spring Boot en Java y consultas mediante JdbcTemplate. |
+| Base del servidor | H2 persistente en archivo para los datos de referencia. |
 
 ## Modelo de datos
 
-| Entidad | Campos | Relación |
-|---|---|---|
-| Lugar | id PK, nombre | Un lugar tiene muchos reportes |
-| Categoria | id PK, nombre | Una categoría tiene muchos reportes |
-| Reporte | uuid PK, lugar_id FK, categoria_id FK, descripcion, fecha_creacion | Pertenece a un lugar y una categoría |
+| Entidad | Datos principales |
+| --- | --- |
+| Lugar | Identificador, nombre y UUID para los registros creados en el dispositivo. |
+| Categoría | Identificador, nombre y UUID para los registros creados en el dispositivo. |
+| Reporte | UUID, lugar, categoría, descripción, fecha, opción de anonimato y nombre del autor cuando corresponda. |
 
-Solo SQLite añade `sincronizado` (0/1). Descripción obligatoria entre 10 y 500 caracteres.
-UUID generado una única vez; fecha en UTC; claves foráneas activadas. La descarga actualiza
-por ID dentro de una transacción y no borra reportes existentes. El catálogo inicial se obtiene del servidor.
+Cada reporte pertenece a un lugar y a una categoría. Los registros nuevos reciben un UUID estable. SQLite conserva además un campo interno de sincronización. Los identificadores locales de lugares y categorías no se superponen con los del servidor.
 
-## Contrato inicial de API
+## Guardado y actualización
 
-GET /api/catalogo devuelve {lugares: [...], categorias: [...]} y es el endpoint consumido por Android.
-GET /api/lugares y GET /api/categorias permiten consultar cada lista. Cada elemento tiene id y nombre.
-El POST /api/reportes es una operación prevista para semana 3, no implementada en semana 1.
-Se planifica aceptar reintentos idénticos con el mismo UUID sin volver a insertar, y rechazar contenido
-distinto con el mismo UUID. Un fallo no debe marcar el reporte como sincronizado.
+Guardar registra el formulario en SQLite y permite consultarlo desde las pantallas. Actualizar descarga lugares y categorías desde Spring Boot y los incorpora a SQLite. La actualización mantiene los reportes y los registros locales existentes. Los formularios pueden utilizarse sin descargar previamente datos del servidor.
 
-## Pantallas
+## Consultas REST
 
-1. Inicio: cantidad de pendientes, navegación y descarga de catálogos con estado de resultado.
-2. Lugares: listado local de lugares y categorías, con mensaje si todavía no se descargaron.
-3. Nuevo reporte: selectores, descripción, validación y guardado offline.
-4. Mis reportes: listado local y acceso a cada detalle.
-5. Detalle: lugar, categoría, descripción, fecha, UUID y estado de sincronización.
+GET /api/catalogo devuelve las listas de lugares y categorías y es la consulta que utiliza Android. GET /api/lugares y GET /api/categorias permiten consultar cada lista por separado. Cada elemento contiene un identificador y un nombre.
 
-## Entrega de la semana 1 y planificación
+## Reglas de validación
 
-La base de esta entrega incluye código Android y backend, tablas principales, endpoints JSON,
-navegación, descarga y prototipo visual. También adelanta el guardado local de reportes.
-La validación ejecutada y los pasos que requieren emulador se detallan por separado en validacion.md.
-La demostración consiste en arrancar ambos proyectos, descargar el catálogo y mostrarlo desde SQLite.
+Los nombres de lugares y categorías tienen entre 3 y 80 caracteres y no pueden repetirse en la lista actual al guardarlos. La descripción tiene entre 10 y 500 caracteres. Si el reporte no es anónimo, el nombre tiene entre 2 y 80 caracteres. Un reporte anónimo no almacena un nombre de autor.
 
-Semana 2: reforzar formularios, consultas y pruebas de persistencia offline. Semana 3: implementar envío,
-confirmación, reintentos y control de duplicados. Semana 4: estabilizar, probar, documentar y defender.
-Reparto sugerido: Roger, Android y SQLite; Johan, backend y base del servidor. Ambos participan en integración.
-Cada integrante debe registrar aportes reales en Git y poder explicar su código.
+# Pantallas y navegación
+
+Los botones de navegación utilizan exactamente el mismo nombre que la pantalla de destino. Los formularios de Lugares, Categorías y Nuevo reporte comparten la acción Guardar.
+
+| Pantalla | Contenido y acciones |
+| --- | --- |
+| Inicio | Resumen de registros y acceso a Nuevo reporte, Reportes, Lugares, Categorías y Actualizar. |
+| Lugares | Campo Nombre, botón Guardar y lista de lugares. |
+| Categorías | Campo Nombre, botón Guardar y lista de categorías. |
+| Nuevo reporte | Lugar, categoría, descripción, Reporte anónimo, Tu nombre cuando corresponda y Guardar. |
+| Reportes | Lista de reportes y acceso a Nuevo reporte y al detalle de cada registro. |
+| Detalle del reporte | Lugar, categoría, descripción, autor y fecha. |
+
+## Etiquetas comunes
+
+Inicio · Lugares · Categorías · Nuevo reporte · Reportes · Detalle del reporte. Las acciones son Guardar, Actualizar y Volver. Actualizar conserva su nombre mientras trabaja; el resultado se comunica con un mensaje breve.
+
+## Demostración
+
+- Abrir Lugares, escribir un nombre y pulsar Guardar. Repetir el proceso en Categorías.
+
+- Abrir Nuevo reporte, completar el formulario y guardar con Reporte anónimo activado.
+
+- Guardar otro reporte desactivando Reporte anónimo e indicando un nombre.
+
+- Abrir Reportes y comprobar que el detalle muestra Anónimo o el nombre elegido.
+
+- Cerrar y abrir la aplicación para comprobar que los registros permanecen guardados.
+
+- Con Spring Boot en ejecución, pulsar Actualizar y consultar los datos incorporados.
+
+## Organización del equipo
+
+Roger trabaja en Android y SQLite; Johan, en Spring Boot y la base del servidor. Ambos participan en las pruebas y en la explicación del funcionamiento. Cada integrante registra sus cambios reales en Git.
+
+Base de referencia: consigna del Proyecto Práctico TIC y código de CampusReport. Las comprobaciones técnicas y las instrucciones de ejecución se mantienen en el repositorio.
