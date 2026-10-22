@@ -15,6 +15,13 @@ public class ReportRepository {
         return jdbc.query("SELECT * FROM reporte WHERE uuid=?",MAPPER,uuid).stream().findFirst();
     }
     public List<Reporte> listar() {return jdbc.query("SELECT * FROM reporte ORDER BY fecha_creacion DESC,uuid",MAPPER);}
+    public List<Reporte> listarDesde(String desde) {
+        return jdbc.query(
+            "SELECT * FROM reporte WHERE fecha_creacion > ? ORDER BY fecha_creacion DESC, uuid",
+            MAPPER,
+            desde
+        );
+    }
     public void guardar(Reporte r) {
         jdbc.update("INSERT INTO reporte(uuid,lugar_id,categoria_id,descripcion,fecha_creacion,anonimo,autor) VALUES(?,?,?,?,?,?,?)",
             r.uuid(),r.lugarId(),r.categoriaId(),r.descripcion(),r.fechaCreacion(),r.anonimo(),r.autor());
