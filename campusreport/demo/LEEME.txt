@@ -1,0 +1,24 @@
+﻿CAMPUSREPORT 0.3.0
+
+Extraer todo el ZIP antes de abrir los accesos.
+Requiere Windows, Android Studio con un emulador y Java 17 o 21.
+
+1. Abrir Android Studio > Tools > Device Manager e iniciar UN emulador.
+2. Abrir 1_iniciar_servidor.cmd y esperar Started CampusReportApplication.
+3. Abrir http://localhost:8080/api/catalogo en el navegador de Windows.
+4. Abrir 2_instalar_app.cmd. En la app pulsar Actualizar.
+5. Consultar Lugares y Categorías.
+6. Desactivar la red de Windows Y detener el servidor con Ctrl+C.
+7. Crear dos reportes con Guardar, uno anónimo y otro con nombre.
+8. Abrir 3_cerrar_app.cmd y después 4_abrir_app.cmd.
+9. Consultar Reportes: los dos siguen guardados y pendientes.
+
+IMPORTANTE: apagar Wi-Fi no detiene un servidor local; detener también Spring Boot.
+No borrar datos ni desinstalar para comprobar persistencia.
+Si aparece UPDATE_INCOMPATIBLE, usar un emulador nuevo y conservar el anterior.
+El guardado funciona en SQLite. Actualizar no envía reportes.
+El servidor recibe JSON por POST /api/reportes y lo conserva en H2.
+Los accesos Windows buscan Java y adb en sus ubicaciones habituales.
+
+Código: https://github.com/roger-prime/Tutorial/tree/campusreport-semana1/campusreport
+Guía: CampusReport_Guia_Funcionamiento.docx

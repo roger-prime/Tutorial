@@ -10,4 +10,6 @@
     <string name="volver">Volver</string>
     <string name="reporte_anonimo">Reporte anónimo</string>
     <string name="tu_nombre">Tu nombre</string>
+    <string name="pendiente_sincronizacion">Pendiente de sincronización</string>
+    <string name="sincronizado">Sincronizado</string>
 </resources>

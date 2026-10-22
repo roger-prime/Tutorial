@@ -9,7 +9,7 @@ public class ReportsActivity extends BaseActivity {
         button(R.string.nuevo_reporte,v->{open(NewReportActivity.class);finish();});
         if(app.db.reportes().isEmpty()) card("Todavía no hay reportes. Creá el primero.");
         for(Report r:app.db.reportes()) {
-            button(r.lugar+" · "+r.categoria+"\n"+r.autorVisible(),v->{
+            button(r.lugar+" · "+r.categoria+"\n"+r.autorVisible()+"\n"+getString(r.sincronizado?R.string.sincronizado:R.string.pendiente_sincronizacion),v->{
                 Intent intent=new Intent(this,DetailActivity.class);intent.putExtra("uuid",r.uuid);startActivity(intent);
             });
         }backButton();

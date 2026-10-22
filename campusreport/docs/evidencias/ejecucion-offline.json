@@ -1,0 +1,34 @@
+{
+  "fecha": "2026-10-22",
+  "version": "0.3.0",
+  "comprobaciones": [
+    {
+      "prueba": "GET /api/catalogo",
+      "resultado": 200,
+      "lugares": 4,
+      "categorias": 4
+    },
+    {
+      "prueba": "POST anónimo",
+      "resultado": 201,
+      "autor": null
+    },
+    {
+      "prueba": "Reenvío del mismo UUID",
+      "resultado": 200
+    },
+    {
+      "prueba": "Mismo UUID con otro contenido",
+      "resultado": 409
+    },
+    {
+      "prueba": "Servidor detenido",
+      "resultado": "Conexión rechazada"
+    },
+    {
+      "prueba": "Lectura después de reiniciar el servidor",
+      "resultado": 200,
+      "persistencia": true
+    }
+  ]
+}

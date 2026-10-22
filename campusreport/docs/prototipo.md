@@ -18,10 +18,10 @@ Acciones Guardar y Volver. Al marcar Reporte anónimo, el nombre introducido se 
 
 ## Reportes
 Botón Nuevo reporte y lista con lugar, categoría y autor (Anónimo o el nombre indicado).
-Al tocar un registro se abre Detalle del reporte.
+Cada registro muestra Pendiente de sincronización. Al tocarlo se abre Detalle del reporte.
 
 ## Detalle del reporte
-Lugar, categoría, descripción, autor y fecha. Acción Volver.
+Lugar, categoría, descripción, autor, fecha y estado Pendiente de sincronización. Acción Volver.
 
 Los formularios y los registros muestran mensajes breves, sin detalles de SQLite, UUID, Spring Boot
-ni planificación por semanas. Las imágenes de referencia se entregan como tablas editables en Word.
+ni planificación por semanas. La guía de funcionamiento describe las acciones y la demostración.

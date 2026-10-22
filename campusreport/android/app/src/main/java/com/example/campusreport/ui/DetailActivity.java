@@ -13,6 +13,7 @@ public class DetailActivity extends BaseActivity {
         else {
             card("Lugar: "+report.lugar+"\nCategoría: "+report.categoria);
             card(report.descripcion);card("Autor: "+report.autorVisible());
+            card("Estado: "+getString(report.sincronizado?R.string.sincronizado:R.string.pendiente_sincronizacion));
             String fecha=DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.systemDefault()).format(Instant.parse(report.fecha));
             text("Creado: "+fecha,14,0xFF50637E);
         }backButton();

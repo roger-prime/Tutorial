@@ -65,4 +65,25 @@ public class CampusDbLocalTest {
         assertTrue(db.reporte("anterior").anonimo);assertNull(db.reporte("anterior").autor);
         assertTrue(db.crearLugar("Patio")<0);assertEquals(2,db.getReadableDatabase().getVersion());
     }
+    @Test public void downloadedCatalogAndTwoPendingReportsSurviveReopening() throws Exception {
+        db.guardarCatalogo(new JSONObject("{\"lugares\":[{\"id\":1,\"nombre\":\"Aula 1\"},{\"id\":2,\"nombre\":\"Biblioteca\"}],\"categorias\":[{\"id\":1,\"nombre\":\"Electricidad\"},{\"id\":2,\"nombre\":\"Mobiliario\"}]}"));
+        // Desde aquí solo se usa SQLite: no existe ninguna llamada a red.
+        String first=db.crearReporte(1,1,"La luz del aula no enciende",true,null);
+        String second=db.crearReporte(2,2,"Una silla de la biblioteca está rota",false,"Roger Báez");
+        db.close();db=new CampusDb(context,NAME);
+        assertEquals(2,db.lugares().size());assertEquals(2,db.categorias().size());
+        assertEquals(2,db.reportes().size());assertEquals(2,db.pendientes());
+        assertFalse(db.reporte(first).sincronizado);assertFalse(db.reporte(second).sincronizado);
+        assertEquals("Anónimo",db.reporte(first).autorVisible());assertEquals("Roger Báez",db.reporte(second).autorVisible());
+        assertEquals("Una silla de la biblioteca está rota",db.reporte(second).descripcion);
+    }
+    @Test public void badDownloadRollsBackAndInvalidFormDoesNotInsert() throws Exception {
+        long place=db.crearLugar("Laboratorio"),category=db.crearCategoria("Electricidad");
+        assertThrows(IllegalArgumentException.class,()->db.crearReporte(place,category,"corta"));
+        assertThrows(IllegalArgumentException.class,()->db.crearReporte(place,category,new String(new char[501]).replace('\0','x')));
+        assertThrows(android.database.sqlite.SQLiteConstraintException.class,()->db.crearReporte(999,category,"La lámpara no funciona"));
+        assertEquals(0,db.reportes().size());
+        assertThrows(org.json.JSONException.class,()->db.guardarCatalogo(new JSONObject("{\"lugares\":[{\"id\":1,\"nombre\":\"Patio\"}],\"categorias\":[{\"id\":0,\"nombre\":\"Inválido\"}]}")));
+        assertEquals(1,db.lugares().size());assertEquals("Laboratorio",db.lugares().get(0).nombre);
+    }
 }

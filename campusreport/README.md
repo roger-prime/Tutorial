@@ -1,7 +1,7 @@
 # CampusReport
 
 Aplicación Android en Java para guardar lugares, categorías y reportes de mantenimiento de la facultad.
-Equipo: Roger y Johan. Versión 0.2.0, actualización del 20 de octubre de 2026.
+Equipo: Roger y Johan. Versión 0.3.0, actualización del 22 de octubre de 2026.
 
 ## Funcionamiento
 
@@ -71,8 +71,10 @@ La opción oculta el nombre del autor; no elimina datos que la persona escriba v
 Logcat registra eventos y UUID, sin volcar el nombre del autor ni la descripción.
 
 Actualmente Guardar persiste en el dispositivo. Actualizar descarga referencias: no transmite los reportes
-ni los lugares o categorías creados localmente. El servidor conserva el esquema de reportes con sus
-campos de anonimato, pero no expone un POST de recepción. Esta precisión es técnica y no aparece en el prototipo.
+ni los lugares o categorías creados localmente. El servidor ya expone POST /api/reportes para recibir JSON y conservarlo en H2.
+El estado **Pendiente de sincronización** permanece en los reportes de Android porque Guardar no llama al POST.
+El POST requiere identificadores positivos del catálogo del servidor: los lugares y categorías creados únicamente
+en SQLite no se envían con este contrato. Consultar `docs/guia_funcionamiento.md` para el formato y la demostración.
 
 ## Endpoints
 
@@ -81,15 +83,34 @@ campos de anonimato, pero no expone un POST de recepción. Esta precisión es t�
 | GET | /api/catalogo | Lugares y categorías |
 | GET | /api/lugares | Lista de lugares |
 | GET | /api/categorias | Lista de categorías |
+| GET | /api/reportes | Reportes recibidos en H2 |
+| GET | /api/reportes/{uuid} | Detalle de un reporte recibido |
+| POST | /api/reportes | Recibir un reporte JSON con validación |
 
-## Demostración
+## Demostración en Windows
 
-1. Guardar un lugar y una categoría sin conexión.
-2. Guardar un reporte con Reporte anónimo activado y otro indicando un nombre.
-3. Consultar ambos desde Reportes y comprobar el autor en Detalle del reporte.
-4. Cerrar y abrir la app y comprobar que los registros permanecen guardados.
-5. Iniciar Spring Boot, pulsar Actualizar y comprobar que los registros propios se conservan.
-6. En Logcat usar `package:mine tag:CampusReport level:DEBUG` para ver los eventos.
+El paquete `CampusReport_Demostracion.zip` contiene el APK, el JAR y accesos de Windows.
+Las fuentes de los accesos se encuentran en `demo/windows`; los binarios se generan con los comandos de abajo.
+
+1. Extraer el ZIP y abrir un único emulador en Android Studio → Tools → Device Manager.
+2. Ejecutar `1_iniciar_servidor.cmd` y esperar `Started CampusReportApplication`.
+3. Abrir http://localhost:8080/api/catalogo en Windows.
+4. Ejecutar `2_instalar_app.cmd`; en CampusReport pulsar **Actualizar** y consultar **Lugares** y **Categorías**.
+5. Desactivar la red de Windows y detener el servidor con Ctrl+C. Apagar solo Wi-Fi no corta la conexión local.
+6. Pulsar **Actualizar**: aparece el mensaje de error y se conservan las listas.
+7. Crear dos reportes desde **Nuevo reporte**, uno anónimo y otro con nombre. Ambos quedan **Pendiente de sincronización**.
+8. Ejecutar `3_cerrar_app.cmd` y después `4_abrir_app.cmd`. Volver a **Reportes** y revisar los dos detalles.
+
+Los accesos usan Java y Android SDK Platform-Tools ya instalados. No borran los datos de la app.
+Si una firma distinta impide actualizar la instalación, usar un emulador nuevo y conservar el anterior.
+Guía completa: `docs/guia_funcionamiento.md`. JSON de ejemplo: `demo/reporte_ejemplo.json`.
+
+## Recepción JSON
+
+ReportService valida UUID, referencias, descripción, fecha, anonimato y autor. ReportRepository persiste
+el reporte en H2. Un nuevo UUID devuelve 201; un reenvío con el mismo contenido devuelve 200; el mismo UUID
+con contenido diferente devuelve 409. Los campos inválidos devuelven 400 y un detalle inexistente, 404.
+La recepción anónima descarta el nombre recibido. La base del servidor es persistente en archivo.
 
 ## Pruebas
 
@@ -105,11 +126,11 @@ campos de anonimato, pero no expone un POST de recepción. Esta precisión es t�
 Las pruebas locales de SQLite cubren guardado, persistencia, descarga repetida, anonimato y migración.
 Se usa una base de prueba separada. Los resultados ejecutados se registran en `docs/validacion.md`.
 APK: `android/app/build/outputs/apk/debug/app-debug.apk`.
-Servidor compilado: `backend/target/campusreport-backend-0.2.0.jar`.
+Servidor compilado: `backend/target/campusreport-backend-0.3.0.jar`.
 
 ## Documentación y equipo
 
 `docs/definicion.md` contiene la definición actualizada; `docs/prototipo.md`, los nombres y acciones de las pantallas.
-La definición y el prototipo se entregan también en Word para su revisión.
+`docs/guia_funcionamiento.md` explica el funcionamiento actual y la demostración; se entrega también en Word.
 La base se preparó con asistencia de IA. Cada integrante debe realizar y explicar aportes reales en Git;
 ver `docs/aportes.md`. No se atribuyen cambios a quien no los realizó.

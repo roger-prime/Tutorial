@@ -1,6 +1,6 @@
 # Definición de CampusReport
 
-Proyecto Práctico TIC · Roger y Johan · Actualización del 20 de octubre de 2026
+Proyecto Práctico TIC · Roger y Johan · Actualización del 22 de octubre de 2026
 
 ## Problema y objetivo
 
@@ -104,3 +104,11 @@ Inicio · Lugares · Categorías · Nuevo reporte · Reportes · Detalle del rep
 Roger trabaja en Android y SQLite; Johan, en Spring Boot y la base del servidor. Ambos participan en las pruebas y en la explicación del funcionamiento. Cada integrante registra sus cambios reales en Git.
 
 Base de referencia: consigna del Proyecto Práctico TIC y código de CampusReport. Las comprobaciones técnicas y las instrucciones de ejecución se mantienen en el repositorio.
+
+## Recepción y estado de los reportes
+
+Reportes y Detalle del reporte muestran Pendiente de sincronización mientras sincronizado vale 0.
+El backend incorpora las entidades de dominio Lugar, Categoria y Reporte, ReportRepository y ReportService.
+POST /api/reportes recibe y valida JSON; GET /api/reportes y GET /api/reportes/{uuid} consultan lo recibido.
+Guardar en Android mantiene su operación local. Actualizar descarga lugares y categorías, sin enviar reportes.
+El contrato de recepción utiliza las referencias ya existentes en el servidor. La guía completa está en guia_funcionamiento.md.
