@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 @RestController
+//Devuelve el catálogo de lugares y categorías para la aplicación Android
 @RequestMapping("/api")
 public class CatalogController {
     private final CatalogRepository repository;
