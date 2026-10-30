@@ -14,6 +14,9 @@ import java.util.List;
 /** Lugares y Categorías comparten la misma presentación y la acción Guardar. */
 public abstract class CatalogActivity extends BaseActivity {
     protected abstract boolean esLugar();
+    private final Runnable observer=this::refresh;
+    @Override protected void onStart(){super.onStart();app.observar(observer);}
+    @Override protected void onStop(){app.dejarDeObservar(observer);super.onStop();}
     private EditText nombre;private LinearLayout lista;
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -42,7 +45,7 @@ public abstract class CatalogActivity extends BaseActivity {
     private void refresh() {
         lista.removeAllViews();List<NamedItem> items=esLugar()?app.db.lugares():app.db.categorias();
         if(items.isEmpty()) row(esLugar()?"Todavía no hay lugares. Agregá el primero.":"Todavía no hay categorías. Agregá la primera.");
-        for(NamedItem item:items) row(item.nombre);
+        for(NamedItem item:items) row(item.nombre+"\n"+getString(item.sincronizado?R.string.sincronizado:R.string.pendiente_sincronizacion));
     }
     private void row(String value) {
         TextView tv=new TextView(this);tv.setText(value);tv.setTextSize(17);tv.setTextColor(0xFF10213E);

@@ -1,24 +1,34 @@
-﻿CAMPUSREPORT 0.3.0
+CAMPUSREPORT 0.4.0
+Roger Báez y Johan Escurra
 
-Extraer todo el ZIP antes de abrir los accesos.
-Requiere Windows, Android Studio con un emulador y Java 17 o 21.
+Extraer todo el ZIP en una carpeta nueva antes de ejecutar los accesos.
+Leer CampusReport_Guia_Funcionamiento.docx.
 
-1. Abrir Android Studio > Tools > Device Manager e iniciar UN emulador.
-2. Abrir 1_iniciar_servidor.cmd y esperar Started CampusReportApplication.
-3. Abrir http://localhost:8080/api/catalogo en el navegador de Windows.
-4. Abrir 2_instalar_app.cmd. En la app pulsar Actualizar.
-5. Consultar Lugares y Categorías.
-6. Desactivar la red de Windows Y detener el servidor con Ctrl+C.
-7. Crear dos reportes con Guardar, uno anónimo y otro con nombre.
-8. Abrir 3_cerrar_app.cmd y después 4_abrir_app.cmd.
-9. Consultar Reportes: los dos siguen guardados y pendientes.
+PREPARAR
+1. Conservar la carpeta anterior. Detener su servidor antes de abrir el nuevo.
+2. Si hay datos previos del servidor, copiar la carpeta data completa al nuevo paquete,
+   con ambos servidores detenidos. No mezclar dos bases.
+3. Android Studio > Tools > Device Manager > iniciar un solo emulador y esperar Inicio.
+   Puede ser el emulador API 37 que ya tenés; no hace falta otra imagen.
+4. Si la app anterior contiene datos, usar 0_respaldar_datos_android.cmd antes de actualizar.
+5. Abrir 1_iniciar_servidor.cmd; esperar Started CampusReportApplication.
+6. Abrir 2_instalar_app.cmd; esperar Success. La actualización usa install -r.
+   Si aparece UPDATE_INCOMPATIBLE: conservar el emulador anterior y crear otro usando
+   la misma imagen ya descargada. No desinstalar ni usar Wipe Data.
 
-IMPORTANTE: apagar Wi-Fi no detiene un servidor local; detener también Spring Boot.
-No borrar datos ni desinstalar para comprobar persistencia.
-Si aparece UPDATE_INCOMPATIBLE, usar un emulador nuevo y conservar el anterior.
-El guardado funciona en SQLite. Actualizar no envía reportes.
-El servidor recibe JSON por POST /api/reportes y lo conserva en H2.
-Los accesos Windows buscan Java y adb en sus ubicaciones habituales.
+DEMOSTRAR
+1. En CampusReport pulsar Sincronizar. Consultar Lugares y Categorías.
+2. Desconectar internet y detener el servidor con Ctrl+C. Apagar Wi-Fi no corta localhost.
+3. Crear tres reportes y comprobar Pendiente de sincronización.
+4. Usar 3_cerrar_app.cmd y 4_abrir_app.cmd; comprobar que siguen guardados.
+5. Recuperar conexión y abrir 1_iniciar_servidor.cmd. Pulsar Sincronizar.
+6. Usar 5_ver_reportes_servidor.cmd. Verificar los tres UUID y el total.
+7. Pulsar Sincronizar otra vez y recargar el navegador: mismo total, sin duplicados.
+8. Usar 6_crear_dato_servidor.cmd. Pulsar Sincronizar y buscar el nuevo reporte.
+   Repetir el acceso 6 reenvía el mismo JSON guardado en evidencias_demo; no duplica.
 
-Código: https://github.com/roger-prime/Tutorial/tree/campusreport-semana1/campusreport
-Guía: CampusReport_Guia_Funcionamiento.docx
+El paquete utiliza Java 17 o superior y Platform-Tools ya instalados.
+La base del servidor es H2, en data/campusreport.mv.db. La app usa SQLite.
+La app consulta http://10.0.2.2:8080; Windows usa http://localhost:8080.
+No borres data, no desinstales y no uses Wipe Data para reiniciar.
+Los comandos de Windows requieren el ensayo final en tu computadora.

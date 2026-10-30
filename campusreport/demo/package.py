@@ -11,11 +11,12 @@ parser.add_argument('--output', type=Path, default=root / 'dist/CampusReport_Dem
 args = parser.parse_args()
 files = {
     'CampusReport.apk': root / 'android/app/build/outputs/apk/debug/app-debug.apk',
-    'CampusReport_Servidor.jar': root / 'backend/target/campusreport-backend-0.3.0.jar',
+    'CampusReport_Servidor.jar': root / 'backend/target/campusreport-backend-0.4.0.jar',
     'LEEME.txt': root / 'demo/LEEME.txt',
     'reporte_ejemplo.json': root / 'demo/reporte_ejemplo.json',
 }
-for path in sorted((root / 'demo/windows').rglob('*.cmd')):
+for path in sorted((root / 'demo/windows').rglob('*')):
+    if not path.is_file(): continue
     files[path.relative_to(root / 'demo/windows').as_posix()] = path
 if args.guide:
     files['CampusReport_Guia_Funcionamiento.docx'] = args.guide

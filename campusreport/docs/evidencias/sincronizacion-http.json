@@ -1,0 +1,15 @@
+{
+  "version": "0.4.0",
+  "fecha": "2026-10-30",
+  "entorno": "HTTP real y H2 temporal persistente",
+  "comprobaciones": {
+    "referencias_y_reenvios": true,
+    "conflicto_referencia": true,
+    "tres_reportes_recibidos": true,
+    "reenvio_sin_duplicados": true,
+    "conflicto_reporte": true,
+    "validacion": true,
+    "novedad_descargable": true,
+    "persistencia_tras_reinicio": true
+  }
+}

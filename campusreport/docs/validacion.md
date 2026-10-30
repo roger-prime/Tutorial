@@ -1,33 +1,64 @@
 # Validación de CampusReport
 
-Fecha: 22 de octubre de 2026. Versión: 0.3.0.
+Versión 0.4.0 · 30 de octubre de 2026
 
-| Comprobación | Resultado |
+## Resultados ejecutados
+
+- APK debug y JAR ejecutable compilados con éxito usando JDK 17.
+- Backend: 13 pruebas de integración aprobadas, sin fallos ni omisiones.
+- Android: 16 pruebas aprobadas, sin fallos ni omisiones, con Robolectric y SQLite nativo.
+- Ensayo HTTP adicional: 8 comprobaciones aprobadas con H2 persistente temporal.
+
+## Cobertura
+
+| Grupo | Casos |
 |---|---|
-| Compilación Android | APK debug generado; versionCode 3, versionName 0.3.0, minSdk 26 |
-| Robolectric con SQLite nativo | 6 pruebas, 0 fallos, 0 errores |
-| Backend Maven | JAR ejecutable generado; 9 pruebas de integración, 0 fallos, 0 errores |
-| JAR real y H2 en archivo | GET del catálogo, POST anónimo, reenvío, conflicto y persistencia tras reinicio verificados por HTTP |
-| Guía Word | Renderizada y revisada visualmente antes de entregar |
+| SQLite local, 6 pruebas | Persistencia, validación, anonimato, nombre, migración inicial y descarga transaccional. |
+| Sincronización Android, 9 pruebas | Tres reportes offline, referencias locales, reinicio, respuesta perdida, rechazo parcial, confirmación incorrecta, novedades sin duplicar, fusión de referencias, rollback de descarga y migración v2 a v3. |
+| HTTP integrado, 1 prueba | CampusDb y ApiClient reales conectados a un JAR Spring Boot real: tres altas, reenvío explícito, nueva descarga y reapertura de SQLite. |
+| Backend, 13 pruebas | Consultas, claves foráneas, validación, anonimato, UUID idempotente, conflictos, altas de referencias y reutilización de nombres existentes. |
+| Ensayo del JAR | POST y GET reales, reenvíos, conflictos, nuevo registro y persistencia de reportes y confirmaciones al reiniciar el proceso. |
 
-## Casos cubiertos
+Resultados por suite: `evidencias/pruebas-sincronizacion.json`.
+Ensayo HTTP: `evidencias/sincronizacion-http.json`.
+Los archivos de evidencia de la versión anterior se conservan como historial y no describen esta ejecución.
 
-SQLite: creación local de referencias; descarga repetida sin pérdida; nombre anónimo nulo; nombre validado;
-migración de base anterior; catálogo descargado y dos reportes pendientes después de cerrar y reabrir la base;
-rechazo de descripción inválida y referencia inexistente; rollback ante catálogo inválido.
+## Reproducir
 
-Backend: lectura del catálogo desde H2; categorías; claves foráneas; recepción y lectura de reportes;
-anonimato; nombre requerido; UUID repetido sin duplicar; conflicto por contenido distinto; validación
-de campos y referencias; JSON mal formado y detalle inexistente.
+En `campusreport/backend`:
 
-La ejecución real del servidor está registrada en `evidencias/ejecucion-offline.json`.
-Las evidencias anteriores del 16 de octubre permanecen identificadas como históricas.
+```powershell
+.\mvnw.cmd test package
+```
 
-## Ensayo en el equipo
+En `campusreport/android`, indicando el JAR para ejecutar también la integración HTTP:
 
-No se ejecutó un emulador Android ni los accesos de Windows en este entorno. Las pruebas de SQLite se
-realizaron con Robolectric SDK 28 y motor SQLite nativo, y el APK se inspeccionó con aapt.
-El equipo debe ensayar instalación, navegación, formularios y cierre mediante force-stop siguiendo
-`guia_funcionamiento.md`. No se presenta el documento como evidencia de una ejecución visual en Android.
+```powershell
+$env:CAMPUS_BACKEND_JAR = (Resolve-Path ..\backend\target\campusreport-backend-0.4.0.jar).Path
+.\gradlew.bat assembleDebug testDebugUnitTest
+```
 
-La prueba de recepción HTTP guarda en H2; no marca como sincronizados los reportes locales de Android.
+Sin `CAMPUS_BACKEND_JAR`, la prueba HTTP se omite de forma explícita; las otras 15 pruebas Android siguen ejecutándose.
+`SyncHttpIntegrationTest` inicia el Java de la misma JVM de pruebas y selecciona `java.exe` en Windows.
+
+Desde `campusreport`, con Python 3 y Java en PATH:
+
+```powershell
+python demo/verify_http.py --jar backend/target/campusreport-backend-0.4.0.jar
+```
+
+Las pruebas usan bases separadas o directorios temporales. No cambian la base de demostración.
+
+## Comprobación pendiente en la computadora del equipo
+
+No se ejecutaron aquí el emulador gráfico ni los accesos `.cmd`/PowerShell en Windows.
+Roger y Johan deben comprobar instalación, presentación y recorrido de `guia_funcionamiento.md`.
+No se debe usar desinstalación ni Wipe Data para probar persistencia.
+
+La actualización de una app existente requiere una firma compatible. El APK de este paquete puede
+estar firmado con otra clave debug: si Android rechaza la actualización, conservar el dispositivo
+anterior y usar otro AVD con la misma imagen descargada. Las migraciones SQLite fueron verificadas;
+una incompatibilidad de firma no se resuelve borrando los datos.
+
+Referencias técnicas: [Android offline-first](https://developer.android.com/topic/architecture/data-layer/offline-first)
+y [transacciones Spring](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html).

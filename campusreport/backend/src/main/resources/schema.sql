@@ -18,3 +18,10 @@ CREATE TABLE IF NOT EXISTS reporte (
 -- Migración aditiva: preserva los registros de instalaciones existentes.
 ALTER TABLE reporte ADD COLUMN IF NOT EXISTS anonimo BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE reporte ADD COLUMN IF NOT EXISTS autor VARCHAR(80);
+
+CREATE TABLE IF NOT EXISTS sync_lock(id BIGINT PRIMARY KEY);
+INSERT INTO sync_lock(id) SELECT 1 WHERE NOT EXISTS(SELECT 1 FROM sync_lock WHERE id=1);
+CREATE TABLE IF NOT EXISTS catalog_receipt(
+    tipo VARCHAR(10) NOT NULL, uuid VARCHAR(36) NOT NULL, nombre VARCHAR(80) NOT NULL,
+    item_id BIGINT NOT NULL, PRIMARY KEY(tipo,uuid)
+);

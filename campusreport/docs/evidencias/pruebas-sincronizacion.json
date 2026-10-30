@@ -1,0 +1,54 @@
+{
+  "version": "0.4.0",
+  "fecha": "2026-10-30",
+  "suites": [
+    {
+      "tipo": "Android",
+      "nombre": "com.example.campusreport.CampusDbLocalTest",
+      "pruebas": 6,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0
+    },
+    {
+      "tipo": "Android",
+      "nombre": "com.example.campusreport.SyncHttpIntegrationTest",
+      "pruebas": 1,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0
+    },
+    {
+      "tipo": "Android",
+      "nombre": "com.example.campusreport.SyncManagerTest",
+      "pruebas": 9,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0
+    },
+    {
+      "tipo": "Backend",
+      "nombre": "com.example.campusreport.CatalogSyncIntegrationTest",
+      "pruebas": 4,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0
+    },
+    {
+      "tipo": "Backend",
+      "nombre": "com.example.campusreport.CatalogIntegrationTest",
+      "pruebas": 4,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0
+    },
+    {
+      "tipo": "Backend",
+      "nombre": "com.example.campusreport.ReportIntegrationTest",
+      "pruebas": 5,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0
+    }
+  ]
+}

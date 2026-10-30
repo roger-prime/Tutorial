@@ -16,4 +16,13 @@ if errorlevel 1 (
  "%CAMPUS_ADB%" devices
  exit /b 1
 )
+set "CAMPUS_BOOT_FILE=%TEMP%\campusreport_boot_%RANDOM%.txt"
+"%CAMPUS_ADB%" -e shell getprop sys.boot_completed > "%CAMPUS_BOOT_FILE%"
+set "CAMPUS_BOOT="
+set /p CAMPUS_BOOT=<"%CAMPUS_BOOT_FILE%"
+del "%CAMPUS_BOOT_FILE%" >nul 2>&1
+if not "%CAMPUS_BOOT%"=="1" (
+ echo El emulador todavia esta iniciando. Espera la pantalla de inicio y vuelve a intentar.
+ exit /b 1
+)
 exit /b 0

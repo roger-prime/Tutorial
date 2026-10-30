@@ -63,7 +63,7 @@ public class CampusDbLocalTest {
         db=new CampusDb(context,NAME);
         assertEquals("La lámpara no funciona",db.reporte("anterior").descripcion);
         assertTrue(db.reporte("anterior").anonimo);assertNull(db.reporte("anterior").autor);
-        assertTrue(db.crearLugar("Patio")<0);assertEquals(2,db.getReadableDatabase().getVersion());
+        assertTrue(db.crearLugar("Patio")<0);assertEquals(3,db.getReadableDatabase().getVersion());
     }
     @Test public void downloadedCatalogAndTwoPendingReportsSurviveReopening() throws Exception {
         db.guardarCatalogo(new JSONObject("{\"lugares\":[{\"id\":1,\"nombre\":\"Aula 1\"},{\"id\":2,\"nombre\":\"Biblioteca\"}],\"categorias\":[{\"id\":1,\"nombre\":\"Electricidad\"},{\"id\":2,\"nombre\":\"Mobiliario\"}]}"));

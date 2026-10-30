@@ -16,11 +16,11 @@ import java.util.UUID;
 /** Fuente local de las pantallas: registros propios y catálogos descargados. */
 public class CampusDb extends SQLiteOpenHelper {
     public CampusDb(Context context) { this(context, "campusreport.db"); }
-    public CampusDb(Context context, String databaseName) { super(context, databaseName, null, 2); }
+    public CampusDb(Context context, String databaseName) { super(context, databaseName, null, 3); }
     @Override public void onConfigure(SQLiteDatabase db) { db.setForeignKeyConstraintsEnabled(true); }
     @Override public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE lugar (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, uuid TEXT UNIQUE)");
-        db.execSQL("CREATE TABLE categoria (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, uuid TEXT UNIQUE)");
+        db.execSQL("CREATE TABLE lugar (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, uuid TEXT UNIQUE, server_id INTEGER UNIQUE)");
+        db.execSQL("CREATE TABLE categoria (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, uuid TEXT UNIQUE, server_id INTEGER UNIQUE)");
         db.execSQL("CREATE TABLE reporte (uuid TEXT PRIMARY KEY, lugar_id INTEGER NOT NULL REFERENCES lugar(id), categoria_id INTEGER NOT NULL REFERENCES categoria(id), descripcion TEXT NOT NULL CHECK(length(trim(descripcion)) BETWEEN 10 AND 500), fecha_creacion TEXT NOT NULL, sincronizado INTEGER NOT NULL DEFAULT 0 CHECK(sincronizado IN (0,1)), anonimo INTEGER NOT NULL DEFAULT 1 CHECK(anonimo IN (0,1)), autor TEXT)");
         db.execSQL("CREATE INDEX reporte_pendiente ON reporte(sincronizado)");
     }
@@ -33,13 +33,22 @@ public class CampusDb extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE reporte ADD COLUMN anonimo INTEGER NOT NULL DEFAULT 1 CHECK(anonimo IN (0,1))");
             db.execSQL("ALTER TABLE reporte ADD COLUMN autor TEXT");
         }
+        if(oldVersion<3) {migrarReferencias(db,"lugar");migrarReferencias(db,"categoria");}
+    }
+    private void migrarReferencias(SQLiteDatabase db,String table) {
+        db.execSQL("ALTER TABLE "+table+" ADD COLUMN server_id INTEGER");
+        db.execSQL("CREATE UNIQUE INDEX "+table+"_server_id ON "+table+"(server_id)");
+        db.execSQL("UPDATE "+table+" SET server_id=id WHERE id>0");
+        try(Cursor c=db.rawQuery("SELECT id FROM "+table+" WHERE id<0 AND uuid IS NULL",null)) {
+            while(c.moveToNext()) {ContentValues v=new ContentValues();v.put("uuid",UUID.randomUUID().toString());db.update(table,v,"id=?",new String[]{c.getString(0)});}
+        }
     }
     public List<NamedItem> lugares() { return readCatalog("lugar"); }
     public List<NamedItem> categorias() { return readCatalog("categoria"); }
     private List<NamedItem> readCatalog(String table) {
         List<NamedItem> items=new ArrayList<>();
-        try(Cursor c=getReadableDatabase().query(table,new String[]{"id","nombre"},null,null,null,null,"nombre ASC")) {
-            while(c.moveToNext()) items.add(new NamedItem(c.getLong(0),c.getString(1)));
+        try(Cursor c=getReadableDatabase().query(table,new String[]{"id","nombre","server_id"},null,null,null,null,"nombre ASC")) {
+            while(c.moveToNext()) items.add(new NamedItem(c.getLong(0),c.getString(1),!c.isNull(2)));
         }
         return items;
     }
@@ -78,8 +87,8 @@ public class CampusDb extends SQLiteOpenHelper {
             if(id<=0 || nombre.isEmpty()) throw new JSONException("Catálogo inválido");
             ContentValues values=new ContentValues(); values.put("nombre",nombre);
             // UPDATE + INSERT conserva las referencias; REPLACE borraría la fila anterior.
-            if(db.update(table,values,"id=?",new String[]{String.valueOf(id)})==0) {
-                values.put("id",id); db.insertOrThrow(table,null,values);
+            if(db.update(table,values,"server_id=?",new String[]{String.valueOf(id)})==0) {
+                values.put("id",id); values.put("server_id",id); db.insertOrThrow(table,null,values);
             }
         }
     }
@@ -119,5 +128,83 @@ public class CampusDb extends SQLiteOpenHelper {
         try(Cursor c=getReadableDatabase().rawQuery("SELECT COUNT(*) FROM reporte WHERE sincronizado=0",null)) {
             c.moveToFirst();return c.getLong(0);
         }
+    }
+
+    public List<JSONObject> referenciasPendientes(boolean lugar) throws JSONException {
+        List<JSONObject> rows=new ArrayList<>();
+        try(Cursor c=getReadableDatabase().rawQuery("SELECT uuid,nombre FROM "+(lugar?"lugar":"categoria")+" WHERE server_id IS NULL ORDER BY id",null)) {
+            while(c.moveToNext()) rows.add(new JSONObject().put("uuid",c.getString(0)).put("nombre",c.getString(1)));
+        }return rows;
+    }
+    public long referenciasPendientesCount() {
+        try(Cursor c=getReadableDatabase().rawQuery("SELECT (SELECT COUNT(*) FROM lugar WHERE server_id IS NULL)+(SELECT COUNT(*) FROM categoria WHERE server_id IS NULL)",null)) {c.moveToFirst();return c.getLong(0);}
+    }
+    public void confirmarReferencia(boolean lugar,JSONObject sent,JSONObject ack) throws JSONException {
+        long serverId=ack.getLong("id");
+        if(serverId<=0||!sent.getString("uuid").equals(ack.getString("uuid"))||!sent.getString("nombre").equals(ack.getString("nombre"))) throw new JSONException("Confirmación de referencia inválida");
+        String table=lugar?"lugar":"categoria",fk=lugar?"lugar_id":"categoria_id";
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try(Cursor c=db.rawQuery("SELECT id,nombre FROM "+table+" WHERE uuid=? AND server_id IS NULL",new String[]{sent.getString("uuid")})) {
+            if(c.moveToFirst()) {
+                long localId=c.getLong(0);
+                if(!c.getString(1).equals(sent.getString("nombre"))) throw new JSONException("La referencia cambió");
+                try(Cursor match=db.rawQuery("SELECT id FROM "+table+" WHERE server_id=?",new String[]{String.valueOf(serverId)})) {
+                    ContentValues v=new ContentValues();
+                    if(match.moveToFirst()) {
+                        v.put(fk,match.getLong(0));db.update("reporte",v,fk+"=?",new String[]{String.valueOf(localId)});
+                        db.delete(table,"id=?",new String[]{String.valueOf(localId)});
+                    } else {v.put("server_id",serverId);db.update(table,v,"id=?",new String[]{String.valueOf(localId)});}
+                }
+            }
+            db.setTransactionSuccessful();
+        } finally {db.endTransaction();}
+    }
+    public List<String> reportesPendientes() {
+        List<String> ids=new ArrayList<>();
+        try(Cursor c=getReadableDatabase().rawQuery("SELECT uuid FROM reporte WHERE sincronizado=0 ORDER BY fecha_creacion,uuid",null)) {while(c.moveToNext()) ids.add(c.getString(0));}return ids;
+    }
+    public JSONObject reporteParaEnviar(String uuid) throws JSONException {
+        String sql="SELECT r.uuid,l.server_id,c.server_id,r.descripcion,r.fecha_creacion,r.anonimo,r.autor FROM reporte r JOIN lugar l ON l.id=r.lugar_id JOIN categoria c ON c.id=r.categoria_id WHERE r.uuid=? AND r.sincronizado=0";
+        try(Cursor c=getReadableDatabase().rawQuery(sql,new String[]{uuid})) {
+            if(!c.moveToFirst()||c.isNull(1)||c.isNull(2)) return null;
+            return new JSONObject().put("uuid",c.getString(0)).put("lugarId",c.getLong(1)).put("categoriaId",c.getLong(2))
+                .put("descripcion",c.getString(3)).put("fechaCreacion",c.getString(4)).put("anonimo",c.getInt(5)==1).put("autor",c.isNull(6)?JSONObject.NULL:c.getString(6));
+        }
+    }
+    public void confirmarReporte(JSONObject sent,JSONObject ack) throws JSONException {
+        com.example.campusreport.sync.ReportJson.confirmar(sent,ack);
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try {
+            JSONObject current=reporteParaEnviar(sent.getString("uuid"));
+            if(current!=null) {
+                com.example.campusreport.sync.ReportJson.confirmar(current,ack);
+                ContentValues v=new ContentValues();v.put("sincronizado",1);db.update("reporte",v,"uuid=?",new String[]{sent.getString("uuid")});
+            }
+            db.setTransactionSuccessful();
+        }finally {db.endTransaction();}
+    }
+    private long localId(SQLiteDatabase db,String table,long serverId) throws JSONException {
+        try(Cursor c=db.rawQuery("SELECT id FROM "+table+" WHERE server_id=?",new String[]{String.valueOf(serverId)})) {
+            if(!c.moveToFirst()) throw new JSONException("Falta una referencia del reporte");return c.getLong(0);
+        }
+    }
+    public int guardarNovedades(JSONObject catalog,JSONArray reports) throws JSONException {
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();int added=0;
+        try {
+            upsert(db,"lugar",catalog.getJSONArray("lugares"));upsert(db,"categoria",catalog.getJSONArray("categorias"));
+            for(int i=0;i<reports.length();i++) {
+                JSONObject r=reports.getJSONObject(i);com.example.campusreport.sync.ReportJson.validar(r);
+                String uuid=r.getString("uuid");
+                // Un GET nunca confirma ni sustituye un reporte pendiente; solo el POST confirmado.
+                if(reporte(uuid)!=null) continue;
+                ContentValues v=new ContentValues();v.put("uuid",uuid);
+                v.put("lugar_id",localId(db,"lugar",r.getLong("lugarId")));v.put("categoria_id",localId(db,"categoria",r.getLong("categoriaId")));
+                v.put("descripcion",r.getString("descripcion"));v.put("fecha_creacion",r.getString("fechaCreacion"));
+                v.put("anonimo",r.getBoolean("anonimo")?1:0);v.put("sincronizado",1);
+                if(r.getBoolean("anonimo")) v.putNull("autor");else v.put("autor",r.getString("autor"));
+                db.insertOrThrow("reporte",null,v);added++;
+            }
+            db.setTransactionSuccessful();return added;
+        }finally {db.endTransaction();}
     }
 }

@@ -7,7 +7,13 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 public class DetailActivity extends BaseActivity {
     @Override protected void onCreate(Bundle state) {
-        super.onCreate(state);title(getString(R.string.detalle_reporte),"La información de tu reporte.");
+        super.onCreate(state);
+    }
+    private final Runnable observer=this::render;
+    @Override protected void onStart(){super.onStart();app.observar(observer);}
+    @Override protected void onStop(){app.dejarDeObservar(observer);super.onStop();}
+    private void render() {
+        content.removeAllViews();title(getString(R.string.detalle_reporte),"La información de tu reporte.");
         String uuid=getIntent().getStringExtra("uuid");Report report=uuid==null?null:app.db.reporte(uuid);
         if(report==null) card("No se encontró este reporte.");
         else {

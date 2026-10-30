@@ -15,16 +15,16 @@ public class MainActivity extends BaseActivity {
         button(R.string.reportes,v->open(ReportsActivity.class));
         button(R.string.lugares,v->open(PlacesActivity.class));
         button(R.string.categorias,v->open(CategoriesActivity.class));
-        update=button(R.string.actualizar,v->{
-            Toast.makeText(this,"Actualizando lugares y categorías",Toast.LENGTH_SHORT).show();app.descargar();
+        update=button(R.string.sincronizar,v->{
+            Toast.makeText(this,"Sincronizando",Toast.LENGTH_SHORT).show();app.sincronizar();
         });
         status=text("",14,0xFF50637E);
     }
     @Override protected void onStart(){super.onStart();app.observar(refresh);}
     @Override protected void onStop(){app.dejarDeObservar(refresh);super.onStop();}
     private void refresh() {
-        stats.setText(app.db.reportes().size()+" reportes guardados\n"+app.db.lugares().size()+" lugares · "+app.db.categorias().size()+" categorías");
+        stats.setText(app.db.reportes().size()+" reportes guardados\n"+app.db.pendientes()+" reportes pendientes de sincronización\n"+app.db.lugares().size()+" lugares · "+app.db.categorias().size()+" categorías");
         status.setText(app.resultado());update.setEnabled(!app.descargando());
-        update.setText(R.string.actualizar);
+        update.setText(R.string.sincronizar);
     }
 }

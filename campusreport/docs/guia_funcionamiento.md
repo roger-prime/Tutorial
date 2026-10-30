@@ -1,209 +1,169 @@
-# CampusReport funcionamiento y demostración
+# CampusReport funcionamiento y sincronización
 
-Proyecto Práctico TIC · Roger Báez y Johan Escurra · Versión 0.3.0 · 22 de octubre de 2026
+Roger Báez y Johan Escurra
 
-CampusReport permite registrar problemas de mantenimiento de la facultad y consultarlos desde el teléfono. Los lugares, las categorías y los reportes se guardan en SQLite. Una vez descargados los datos, la consulta y la creación de reportes funcionan aunque el servidor esté detenido y no haya internet.
+Proyecto Práctico TIC · Versión 0.4.0 · Octubre de 2026
 
-Esta guía explica las funciones, la organización del código y la preparación de una demostración desde Windows con el emulador de Android Studio. La entrega del viernes 23 de octubre consiste en descargar datos, desconectar, crear dos reportes y comprobar que siguen guardados después de cerrar y abrir la aplicación.
+CampusReport permite registrar problemas de mantenimiento de la facultad, consultarlos sin conexión y compartirlos con el servidor cuando vuelve a estar disponible. Esta guía explica qué hace la aplicación, cómo ejecutar la nueva versión en Windows y cómo demostrar el ciclo completo de guardado y sincronización.
 
 ## Funcionalidades de la aplicación
 
-| Pantalla | Acciones |
-| --- | --- |
-| Inicio | Ver el resumen y abrir Nuevo reporte, Reportes, Lugares o Categorías. Actualizar descarga los datos del servidor. |
-| Lugares | Escribir Nombre, pulsar Guardar y consultar los lugares almacenados. |
-| Categorías | Escribir Nombre, pulsar Guardar y consultar las categorías almacenadas. |
-| Nuevo reporte | Elegir Lugar y Categoría, escribir Descripción, elegir Reporte anónimo y pulsar Guardar. |
-| Reportes | Consultar la lista y abrir Detalle del reporte. Crear otro mediante Nuevo reporte. |
-| Detalle del reporte | Consultar lugar, categoría, descripción, autor, fecha y estado. |
+En Lugares y Categorías se escribe un nombre y se pulsa Guardar. En Nuevo reporte se eligen Lugar y Categoría, se completa Descripción y se decide si el reporte será anónimo. Guardar conserva el registro en el teléfono, aunque no haya internet.
 
-## Etiquetas comunes
+Reportes muestra los registros almacenados. Al tocar uno se abre Detalle del reporte, con lugar, categoría, descripción, autor, fecha y estado. El estado inicial es Pendiente de sincronización; cambia a Sincronizado después de una confirmación válida del servidor. Los reportes descargados también aparecen en esta lista.
 
-Cada sección mantiene el mismo nombre en su botón y en su título. Los formularios de Lugares, Categorías y Nuevo reporte usan Guardar. Actualizar siempre descarga información y Volver regresa a la pantalla anterior.
+Sincronizar envía primero los lugares y categorías pendientes y luego los reportes. Después descarga las novedades y las incorpora a SQLite. El botón se deshabilita durante la operación. El resultado indica cuántos reportes se enviaron y descargaron y cuántos registros siguen pendientes.
 
-## Reporte anónimo o con nombre
+## Qué es cada componente
 
-Reporte anónimo está activado inicialmente. Al desactivarlo aparece Tu nombre. Al activarlo de nuevo, ese campo se vacía y se oculta. Un reporte anónimo guarda autor nulo; el detalle muestra Anónimo. El nombre indicado es una declaración del usuario y no requiere una cuenta.
+| Componente | Función en CampusReport |
+|---|---|
+| Frontend Android | Pantallas y formularios que utiliza la persona. Está escrito en Java con Views y XML. |
+| SQLite | Base local del emulador o teléfono. Guarda lugares, categorías, reportes y sus estados. |
+| Backend Spring Boot | Programa Java que valida solicitudes y consulta o guarda información en el servidor. |
+| H2 | Base persistente del backend. Se guarda en data/campusreport.mv.db. |
+| API REST y JSON | Rutas HTTP para intercambiar datos; JSON es el formato de esos mensajes. |
+| Android Studio y Eclipse | Herramientas para editar y ejecutar los proyectos; no son las bases de datos. |
 
-# Guardado local y organización
+La aplicación consulta SQLite para mostrar sus pantallas. La sincronización comunica esa base local con Spring Boot. El servidor de esta demostración se ejecuta en la computadora; no hace falta contratar un servicio externo.
 
-## Cómo circulan los datos
+<!-- page -->
+# Preparar la computadora
 
-Actualizar consulta GET /api/catalogo. La respuesta JSON se incorpora a SQLite dentro de una transacción. Las pantallas consultan SQLite para mostrar los datos. Guardar valida el formulario y escribe el reporte directamente en SQLite, sin hacer una solicitud al servidor.
+## 1 Conservar los datos anteriores
 
-| Componente | Responsabilidad |
-| --- | --- |
-| Android Java | Activities, formularios, navegación, mensajes y validación de campos. |
-| CampusDb y SQLite | Lugares, categorías y reportes persistentes en el dispositivo. |
-| ApiClient y CampusApp | Descarga fuera del hilo principal y actualización del resultado en la pantalla. |
-| Spring Boot y JDBC | Controladores REST, servicio de reportes, repositorios y base H2 persistente. |
+Cerrar el servidor anterior con Ctrl+C. Conservar su carpeta y el emulador que contiene los datos. Si el backend se ejecutaba desde Eclipse, detener esa ejecución también. Debe haber un solo servidor en el puerto 8080.
 
-## Datos y validación
+## 2 Extraer el paquete nuevo
 
-Lugar y Categoría tienen identificador y nombre. Los registros creados en el dispositivo también reciben un UUID y usan identificadores negativos para no coincidir con los identificadores positivos del servidor.
+Descargar CampusReport_Demostracion.zip, hacer clic derecho y elegir Extraer todo. Elegir una carpeta nueva, por ejemplo Escritorio\CampusReport_Sincronizacion. Ejecutar los accesos desde esa carpeta extraída, no desde la vista del ZIP.
 
-Reporte conserva UUID, lugar, categoría, descripción, fecha de creación, anonimato, autor y sincronizado. Las claves foráneas impiden guardar un reporte con un lugar o una categoría inexistentes.
+Si se quieren conservar los datos anteriores del servidor, copiar su carpeta data completa dentro de la carpeta nueva, con ambos servidores detenidos. Si no se copia, el nuevo servidor crea una base inicial con sus lugares y categorías. No mezclar archivos de dos bases distintas.
 
-• Nombre de lugar o categoría: entre 3 y 80 caracteres; se rechaza un nombre ya guardado, sin distinguir mayúsculas y minúsculas.
+## 3 Iniciar el emulador
 
-• Descripción: entre 10 y 500 caracteres después de quitar espacios al principio y al final.
+Abrir Android Studio, entrar en Tools → Device Manager y pulsar el triángulo del dispositivo que ya funciona. Esperar a ver la pantalla de inicio de Android. Dejar abierto un solo emulador. Puede utilizarse el API 37 ya instalado; no hace falta descargar otra imagen para ejecutar el APK.
 
-• Tu nombre: entre 2 y 80 caracteres cuando Reporte anónimo está desactivado.
+## 4 Respaldar la aplicación anterior
 
-• Si falta un lugar o una categoría, la aplicación ofrece entrar en Lugares y Categorías para crearlos.
+Si CampusReport ya contiene datos importantes, hacer doble clic en 0_respaldar_datos_android.cmd. Este acceso cierra la app y copia su SQLite a una carpeta con fecha y hora. Conservar también el emulador original. En una instalación nueva se puede omitir este paso.
 
-## Pendiente de sincronización
+## 5 Iniciar el backend
 
-Cada reporte nuevo se guarda con sincronizado = 0. En Reportes y Detalle del reporte se muestra Pendiente de sincronización. El registro ya está seguro en el dispositivo; ese estado indica que todavía no se ha confirmado su recepción en el servidor.
+Hacer doble clic en 1_iniciar_servidor.cmd. Esperar Started CampusReportApplication y dejar esa ventana abierta. Abrir http://localhost:8080/api/catalogo en el navegador de Windows: deben aparecer lugares y categorías.
 
-Actualizar no envía reportes ni cambia ese estado. El backend ya acepta reportes JSON, pero la aplicación conserva el guardado local y no ejecuta sincronización automática. Cerrar y abrir la app mantiene tanto los datos como su estado.
+## 6 Instalar la aplicación
 
-La actualización de SQLite conserva los registros anteriores. Descargar de nuevo actualiza las referencias del servidor sin eliminar los lugares y categorías locales ni los reportes.
+Hacer doble clic en 2_instalar_app.cmd. Esperar Success y comprobar que CampusReport se abre en el emulador. El acceso intenta actualizar conservando los datos. Necesita Java y Android SDK Platform-Tools, que normalmente ya están disponibles con Android Studio.
 
-# Backend y recepción de reportes
+Si aparece UPDATE_INCOMPATIBLE, la firma de la app anterior es distinta. Conservar el dispositivo anterior y crear otro desde Device Manager → Create Virtual Device, usando la misma imagen ya descargada. Cerrar el primero, iniciar el nuevo y repetir la instalación. No usar Wipe Data ni desinstalar una app cuyos datos se quieran conservar.
 
-Las entidades de dominio Lugar, Categoria y Reporte representan los datos. CatalogRepository y ReportRepository consultan H2 con JdbcTemplate. ReportService valida los reportes y controla los reenvíos; los controladores exponen las rutas REST. La base se guarda en data/campusreport.mv.db.
+## 7 Comprobar la nueva versión
 
-| Método | Ruta | Resultado |
-| --- | --- | --- |
-| GET | /api/catalogo | Lugares y categorías en un JSON. |
-| GET | /api/lugares | Lista de lugares del servidor. |
-| GET | /api/categorias | Lista de categorías del servidor. |
-| GET | /api/reportes | Reportes recibidos por el servidor. |
-| GET | /api/reportes/{uuid} | Detalle de un reporte recibido. |
-| POST | /api/reportes | Validación y guardado de un reporte JSON. |
+En Inicio debe aparecer Sincronizar. Pulsarlo y esperar el resultado. Entrar en Lugares y Categorías. Si todavía aparece Actualizar, se está abriendo la versión anterior o un proyecto diferente.
 
-## Ejemplo de JSON
+<!-- page -->
+# Demostrar el funcionamiento
 
-```text
-{
-  "uuid": "de5fc77a-4fda-4bed-844a-f6c39b7c9fa2",
-  "lugarId": 1,
-  "categoriaId": 1,
-  "descripcion": "La luz del aula no enciende",
-  "fechaCreacion": "2026-10-22T12:00:00Z",
-  "anonimo": true,
-  "autor": null
-}
-```
+## 1 Descargar con conexión
 
-Un reporte nuevo devuelve HTTP 201 y su ubicación. Repetir el mismo UUID con los mismos datos devuelve HTTP 200 y no agrega otra fila. El mismo UUID con otro contenido devuelve HTTP 409. Un formulario inválido devuelve HTTP 400 y un mensaje; un reporte inexistente devuelve HTTP 404.
+Con el servidor abierto, pulsar Sincronizar y mostrar Lugares y Categorías. Abrir 5_ver_reportes_servidor.cmd y anotar cuántos reportes había antes de empezar; podrían existir registros de ensayos anteriores.
 
-El servidor exige un lugar y una categoría existentes en su catálogo. Los lugares y categorías creados únicamente en el dispositivo siguen siendo locales y no se envían mediante este contrato. Si anonimo es true, el servidor descarta cualquier nombre recibido.
+## 2 Desconectar realmente el servidor
 
-## Comprobación opcional del servicio
+Desactivar el Wi-Fi de Windows y desconectar el cable de red si se utiliza. Además, detener el backend con Ctrl+C en su ventana. Esto es necesario porque la conexión local con la computadora puede seguir funcionando aunque se apague internet. Pulsar Sincronizar: debe informar que no completó la conexión y conservar los datos.
 
-Con el servidor iniciado, abrir PowerShell en la carpeta extraída y ejecutar el comando siguiente. El archivo reporte_ejemplo.json ya viene incluido. Esta prueba crea un reporte en H2; no envía los reportes del emulador.
+## 3 Crear tres reportes sin conexión
 
-```text
-$json = Get-Content .\reporte_ejemplo.json -Raw -Encoding UTF8
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/reportes `
-  -ContentType 'application/json; charset=utf-8' `
-  -Body ([System.Text.Encoding]::UTF8.GetBytes($json))
-```
+Entrar en Nuevo reporte, completar los campos y pulsar Guardar. Repetir hasta tener tres registros nuevos. Ejemplos: “La luz del aula no enciende”, “Una silla de la biblioteca está rota” y “Hay una pérdida de agua en el patio”. Elegir lugares y categorías adecuados de las listas.
 
-# Preparación en la computadora
+Guardar uno con Reporte anónimo activado y otro desactivándolo e indicando el nombre. Mostrar Pendiente de sincronización en Reportes. Para demostrar la validación, intentar primero guardar una descripción vacía y luego corregirla.
 
-Preparar hoy la instalación y ensayar el recorrido completo. Para la demostración se utiliza Windows, Android Studio con un emulador instalado y Java 17 o 21. El paquete incluye el APK y el JAR compilados; no necesita descargar dependencias para ejecutarlos.
+## 4 Comprobar la persistencia
 
-## 1 Extraer el paquete
+Con el servidor todavía detenido, ejecutar 3_cerrar_app.cmd y luego 4_abrir_app.cmd. Abrir Reportes y comprobar que los tres registros conservan sus datos y siguen pendientes.
 
-Descargar CampusReport_Demostracion.zip. Hacer clic derecho y elegir Extraer todo. Usar una carpeta fácil de encontrar, por ejemplo Escritorio\CampusReport. Ejecutar los archivos desde la carpeta extraída, no desde la vista del ZIP.
+## 5 Reconectar y enviar
 
-## 2 Abrir el emulador
+Restablecer la conexión de Windows. Ejecutar 1_iniciar_servidor.cmd, esperar el arranque y pulsar Sincronizar en la app. Los tres reportes deben cambiar a Sincronizado. Si había otros pendientes, también pueden enviarse.
 
-Abrir Android Studio. Entrar en Tools → Device Manager. Iniciar un único dispositivo con Android API 26 o superior y esperar a ver su pantalla de inicio. El emulador debe estar completamente iniciado antes de instalar la app.
+## 6 Comprobar el servidor y los reintentos
 
-## 3 Iniciar el servidor
+Ejecutar 5_ver_reportes_servidor.cmd. Buscar las tres descripciones y sus UUID en el JSON. Pulsar Sincronizar otra vez y recargar el navegador: no deben aparecer copias ni aumentar el total por ese reintento.
 
-Hacer doble clic en 1_iniciar_servidor.cmd. Esperar el mensaje Started CampusReportApplication y dejar esa ventana abierta. El acceso busca Java en JAVA_HOME, en la instalación habitual de Android Studio y en PATH. H2 se crea automáticamente; no hace falta instalar otra base de datos.
+## 7 Descargar un dato creado en el servidor
 
-Abrir http://localhost:8080/api/catalogo en el navegador de Windows. Deben aparecer lugares y categorías. Si la página no abre, resolver primero el inicio del servidor.
+Ejecutar 6_crear_dato_servidor.cmd. Se crea un reporte con la descripción “Reporte creado directamente en el servidor para la demostracion”. Antes de sincronizar todavía no estará en la app. Pulsar Sincronizar, buscarlo en Reportes y abrir su detalle. Cerrar y abrir para comprobar que quedó en SQLite.
 
-## 4 Instalar y abrir la app
+El acceso guarda su JSON en evidencias_demo/dato_servidor.json. Repetirlo reutiliza el UUID y no crea duplicados. Para preparar otra demostración independiente, conservar ese archivo con otro nombre antes de ejecutar nuevamente el acceso.
 
-Hacer doble clic en 2_instalar_app.cmd. Debe aparecer Success y abrirse CampusReport en el emulador. El instalador usa adb del SDK de Android y solicita que haya exactamente un emulador conectado. Como alternativa, arrastrar CampusReport.apk sobre la pantalla del emulador.
+## Explicación breve para el profesor
 
-## 5 Descargar y comprobar
+“Guardamos los datos en SQLite y podemos trabajar sin conexión. Al sincronizar, enviamos los pendientes como JSON. Solo los marcamos como sincronizados cuando el servidor confirma su contenido. El UUID evita duplicaciones al reintentar. También descargamos los registros nuevos del servidor y los conservamos localmente.”
 
-En Inicio, pulsar Actualizar. Esperar Lugares y categorías actualizados. Entrar en Lugares y Categorías para ver los datos. En una instalación nueva del servidor se incluyen cuatro lugares y cuatro categorías. Las listas pueden tener más elementos si ya guardaste datos propios.
+<!-- page -->
+# Organización del proyecto y los datos
 
-## Direcciones y conservación de datos
+## Problema objetivo y alcance
 
-En el navegador de Windows se utiliza localhost. La app del emulador usa http://10.0.2.2:8080 para llegar al mismo servidor. El paquete está configurado para esta demostración local, no para conectar un teléfono físico por Wi-Fi.
+El problema es que los desperfectos de la facultad pueden comunicarse informalmente y quedar sin registro, especialmente cuando falta conexión. El objetivo es registrar, consultar y compartir esos problemas conservando la información durante las interrupciones de red.
 
-Conservar la carpeta data del servidor. En el emulador no usar Borrar datos, Wipe Data ni desinstalar la app durante la demostración: esas acciones eliminan información. El acceso 3_cerrar_app.cmd cierra el proceso sin borrar sus registros.
+El alcance actual es una facultad y una demostración local en computadora y emulador. Los lugares y categorías permiten adaptar el uso a otras instituciones educativas u oficinas de empresas. Operar varias organizaciones con datos separados requeriría autenticación, permisos y un despliegue seguro adicional.
 
-# Demostración frente al profesor
+## Estructura del código
 
-## 1 Mostrar la descarga con conexión
+En campusreport/android, ui contiene las pantallas; data administra SQLite; network realiza HTTP; sync coordina los envíos, confirmaciones y descargas. CampusApp mantiene una sola sincronización en un ejecutor separado del hilo de la interfaz.
 
-Con el servidor abierto y el equipo conectado, mostrar la respuesta de /api/catalogo en el navegador. En CampusReport, pulsar Actualizar y enseñar las listas de Lugares y Categorías. Explicar que esos datos se incorporaron a SQLite.
+En campusreport/backend, catalog y report separan controladores REST, servicios y repositorios. Los servicios validan y coordinan las operaciones; JdbcTemplate consulta H2. schema.sql crea o amplía tablas y data.sql agrega los ejemplos iniciales sin borrar datos existentes.
 
-## 2 Dejar el servidor fuera de alcance
+## Modelo de SQLite
 
-Desactivar el Wi-Fi de Windows y desconectar el cable de red si se está usando. Además, detener el servidor con Ctrl+C en su ventana; si pide confirmar el cierre, aceptarlo. Esto es necesario porque localhost sigue funcionando aunque no haya internet.
+| Tabla | Campos principales |
+|---|---|
+| lugar y categoria | id local, nombre, uuid único y server_id único cuando existe confirmación. |
+| reporte | uuid único, lugar_id, categoria_id, descripcion, fecha_creacion, sincronizado, anonimo y autor. |
 
-En la app, pulsar Actualizar una vez. Debe mostrarse No pudimos actualizar. Podés seguir usando tus datos guardados. Esperar unos segundos si es necesario. Entrar en Lugares y Categorías para mostrar que las listas permanecen disponibles.
+Cada reporte pertenece a un lugar y una categoría. Un lugar o categoría puede tener muchos reportes. Los registros propios de referencia tienen ID local negativo; server_id conserva su correspondencia con el servidor. La migración a SQLite versión 3 agrega esa correspondencia sin borrar registros anteriores.
 
-## 3 Mostrar la validación
+## Modelo de H2 y API REST
 
-Abrir Nuevo reporte y pulsar Guardar con Descripción vacía o escribir solo Luz. Aparece el error Escribí entre 10 y 500 caracteres. Completar después el formulario con un texto válido; ese intento inválido no crea un reporte.
+H2 contiene lugar, categoria y reporte, con las mismas relaciones. catalog_receipt conserva las confirmaciones por tipo y UUID de lugares y categorías. sync_lock permite asignar sus identificadores dentro de una transacción.
 
-## 4 Crear dos reportes sin conexión
+GET /api/catalogo descarga lugares y categorías. GET /api/reportes consulta los reportes y GET /api/reportes/{uuid} consulta un detalle. POST /api/lugares, POST /api/categorias y POST /api/reportes reciben registros JSON. GET /api/lugares y GET /api/categorias permiten consultar cada lista.
 
-| Campo | Primer reporte | Segundo reporte |
-| --- | --- | --- |
-| Lugar | Aula 1 | Biblioteca |
-| Categoría | Electricidad | Mobiliario |
-| Descripción | La luz del aula no enciende | Una silla de la biblioteca está rota |
-| Reporte anónimo | Activado | Desactivado |
-| Tu nombre | No aparece | Roger Báez |
+Un alta devuelve HTTP 201. Repetir el mismo UUID y contenido devuelve 200 sin duplicar. El mismo UUID con otro contenido devuelve 409. Los datos inválidos devuelven 400. Android comprueba la respuesta antes de cambiar el estado local; ante un rechazo conserva el pendiente. Una descarga tampoco sobrescribe un reporte pendiente.
 
-Pulsar Guardar en cada formulario. Revisar el detalle y volver a Inicio para crear el siguiente. En Reportes deben verse los dos registros nuevos con Pendiente de sincronización. Si existen registros anteriores, comprobar que el total aumentó en dos.
+Esta versión sincroniza altas y consultas. No incluye edición o eliminación de reportes ni cuentas de usuario. Un nombre indicado en el formulario no representa una identidad verificada.
 
-## 5 Cerrar de verdad y volver a abrir
+<!-- page -->
+# Comprobación y entrega
 
-Con el servidor todavía detenido y la red desconectada, ejecutar 3_cerrar_app.cmd. La aplicación se cierra por completo. Después ejecutar 4_abrir_app.cmd. Entrar en Reportes y abrir los dos registros: deben conservar descripción, autor y Pendiente de sincronización.
+## Pruebas ejecutadas
 
-## Qué explicar al terminar
+Se compilaron el APK y el JAR 0.4.0. Aprobaron 16 pruebas de Android y 13 pruebas del backend, sin fallos ni omisiones. Cubren persistencia, validaciones, migraciones, tres reportes sin conexión, respuestas perdidas, rechazos, confirmaciones, ausencia de duplicados y descarga de novedades. Un ensayo HTTP adicional confirmó ocho comprobaciones, incluida la persistencia después de reiniciar el servidor.
 
-“Descargamos los lugares y categorías del servidor y los guardamos en SQLite. Después desconectamos la red y detuvimos el servidor. Pudimos consultar los datos y crear dos reportes. Al cerrar por completo y abrir la aplicación, los reportes siguieron guardados. Su estado pendiente también se conserva.”
+Las pruebas locales de Android utilizan Robolectric y SQLite nativo. La prueba integrada utiliza el cliente HTTP real y un proceso real de Spring Boot. No se ejecutaron aquí las ventanas del emulador ni los accesos de Windows; el ensayo en la computadora del equipo debe confirmar instalación, presentación visual y funcionamiento de esos accesos.
 
-# Verificación y resolución de problemas
+## Qué entregar
 
-## Comprobaciones realizadas
+Compartir el enlace a la rama campusreport-semana1 del repositorio roger-prime/Tutorial, dentro de la carpeta campusreport. Adjuntar CampusReport_Demostracion.zip y esta guía Word. El ZIP contiene el APK, el JAR y los accesos de demostración; el repositorio conserva fuentes, pruebas y documentación.
 
-| Comprobación | Resultado |
-| --- | --- |
-| Android | APK 0.3.0 compilado; paquete com.example.campusreport; API mínima 26. |
-| SQLite en Android | 6 pruebas aprobadas: persistencia, anonimato, migración, validación, dos reportes pendientes y descarga transaccional. |
-| Backend | 9 pruebas de integración aprobadas: catálogo, referencias, recepción JSON, validaciones y reenvíos. |
-| Servidor ejecutable | Arranque real del JAR, GET y POST comprobados por HTTP; el reporte permanece tras reiniciar H2 en archivo. |
+Agregar capturas propias del ensayo: tres reportes pendientes sin conexión, los mismos reportes sincronizados, sus UUID en el servidor, el total sin cambios después de repetir y el dato creado en el servidor visible en Android. No reemplazar esas evidencias por capturas de otro proyecto.
 
-Las pruebas de Android se ejecutaron con Robolectric y SQLite nativo. No se ejecutó aquí un emulador Android ni los accesos de Windows; el ensayo en la computadora del equipo debe comprobar la presentación visual, la instalación y el recorrido descrito.
+## Abrir las fuentes para continuar
+
+Guardar o commitear los cambios propios antes de actualizar el repositorio. En Android Studio abrir campusreport/android, no Tutorial de la raíz. Para el backend, importar campusreport/backend como Existing Maven Projects en Eclipse, o usar otro IDE Java. Ejecutar un solo backend a la vez.
+
+Desde backend: .\mvnw.cmd test package. Desde android: .\gradlew.bat assembleDebug testDebugUnitTest. La prueba HTTP integrada necesita CAMPUS_BACKEND_JAR con la ruta absoluta del JAR compilado. Las instrucciones completas están en README.md y docs/validacion.md.
 
 ## Si algo no funciona
 
-• No se encontró Java: usar JDK 17 o 21 o revisar JAVA_HOME. El script también busca el Java incluido en Android Studio en su ubicación habitual.
+Puerto 8080 ocupado: cerrar la otra ejecución del backend. Si se desea detenerlo, usar Ctrl+C en su ventana; no eliminar la carpeta data.
 
-• Puerto 8080 ocupado: detener la otra instancia de Spring Boot. Mantener un solo servidor abierto, ya sea desde Eclipse o desde el acceso incluido.
+No se completa la conexión: comprobar http://localhost:8080/api/catalogo en Windows. Si no abre, revisar el servidor. La app del emulador usa http://10.0.2.2:8080; localhost dentro del emulador sería otro equipo.
 
-• No se pudo actualizar: comprobar primero /api/catalogo en Windows. Si abre allí, verificar que el emulador haya iniciado y que el servidor siga abierto. Al detener el servidor para la prueba, ese mensaje es el resultado esperado.
+Emulador offline o iniciando: esperar su pantalla de inicio y dejar un solo dispositivo activo. Si sigue trabado, cerrarlo desde Device Manager o reiniciar la computadora conservando sus datos. No usar Wipe Data como reinicio.
 
-• UPDATE_INCOMPATIBLE al instalar: existe una app firmada con otra clave. Usar un emulador nuevo para este paquete y conservar el anterior con sus datos. No desinstalar una versión que contenga información que se quiera conservar.
+Un reporte sigue pendiente: comprobar que el backend sea el incluido en este paquete y pulsar Sincronizar. Los rechazos conservan el registro; no conviene borrar datos para ocultar el problema. Para diagnosticar, mostrar el mensaje de Inicio y filtrar Logcat por CampusReport.
 
-• No se encontró adb: instalar Android SDK Platform-Tools desde SDK Manager. Si el SDK está en otra carpeta, configurar ANDROID_HOME con su ruta.
-
-## Abrir y comprobar el código
-
-En el repositorio roger-prime/Tutorial, usar la rama campusreport-semana1. Abrir campusreport/android en Android Studio. Para el backend, importar campusreport/backend en Eclipse mediante File → Import → Maven → Existing Maven Projects. El Tutorial de la raíz es un proyecto distinto.
-
-```text
-Backend: .\mvnw.cmd test package
-Android: .\gradlew.bat assembleDebug testDebugUnitTest
-```
-
-Las evidencias de ejecución y las instrucciones también están en campusreport/docs. En Logcat puede filtrarse por CampusReport para ver las acciones; no se registran nombres de autores ni descripciones.
-
-Referencias técnicas: developer.android.com/studio/run/emulator-install-add-files y docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-methods/requestbody.html.
+La configuración está preparada para el emulador de Android Studio en la misma computadora que el backend. Un teléfono físico o un servidor externo requieren configurar la dirección y la conexión correspondientes.

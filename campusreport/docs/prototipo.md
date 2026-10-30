@@ -1,27 +1,28 @@
-# Prototipo de CampusReport
+# Pantallas de CampusReport
+
+Roger Báez y Johan Escurra · Versión 0.4.0
 
 Etiquetas de navegación: Inicio, Lugares, Categorías, Nuevo reporte, Reportes y Detalle del reporte.
-Acciones comunes: Guardar, Actualizar y Volver. En Android se centralizan en res/values/strings.xml.
+Acciones comunes: Guardar, Sincronizar y Volver. Se centralizan en res/values/strings.xml.
 
 ## Inicio
-Resumen de registros y botones Nuevo reporte, Reportes, Lugares, Categorías y Actualizar.
+Resumen de reportes guardados y pendientes, lugares y categorías. Botones Nuevo reporte,
+Reportes, Lugares, Categorías y Sincronizar. Sincronizar conserva su etiqueta y se deshabilita
+mientras trabaja. El resultado indica reportes enviados, descargados, referencias enviadas,
+pendientes y cualquier incidencia. No se ejecutan dos sincronizaciones al mismo tiempo.
 
-## Lugares
-Campo Nombre, botón Guardar y lista de lugares. Volver regresa a la pantalla anterior.
-
-## Categorías
-Campo Nombre, botón Guardar y lista de categorías. Volver regresa a la pantalla anterior.
+## Lugares y Categorías
+Cada pantalla tiene Nombre, Guardar y una lista con Pendiente de sincronización o Sincronizado.
+Volver regresa a la pantalla anterior. Los registros se guardan aunque no haya conexión.
 
 ## Nuevo reporte
-Campos Lugar, Categoría y Descripción; casilla Reporte anónimo; campo Tu nombre solo si no es anónimo.
-Acciones Guardar y Volver. Al marcar Reporte anónimo, el nombre introducido se descarta.
+Lugar, Categoría, Descripción, Reporte anónimo y Tu nombre solo cuando corresponda.
+Guardar valida y persiste; Volver regresa. Al activar Reporte anónimo se descarta el nombre.
 
 ## Reportes
-Botón Nuevo reporte y lista con lugar, categoría y autor (Anónimo o el nombre indicado).
-Cada registro muestra Pendiente de sincronización. Al tocarlo se abre Detalle del reporte.
+Nuevo reporte y lista con lugar, categoría, autor y estado. Al tocar un registro se abre
+Detalle del reporte. Los registros recibidos del servidor también aparecen en esta lista.
 
 ## Detalle del reporte
-Lugar, categoría, descripción, autor, fecha y estado Pendiente de sincronización. Acción Volver.
-
-Los formularios y los registros muestran mensajes breves, sin detalles de SQLite, UUID, Spring Boot
-ni planificación por semanas. La guía de funcionamiento describe las acciones y la demostración.
+Lugar, categoría, descripción, autor, fecha, estado y Volver. Las pantallas de consulta
+se actualizan cuando termina la sincronización. No se muestran detalles técnicos en los formularios.

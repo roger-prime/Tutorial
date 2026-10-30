@@ -5,7 +5,13 @@ import com.example.campusreport.R;
 import com.example.campusreport.data.Report;
 public class ReportsActivity extends BaseActivity {
     @Override protected void onCreate(Bundle state) {
-        super.onCreate(state);title(getString(R.string.reportes),"Consultá tus reportes guardados.");
+        super.onCreate(state);
+    }
+    private final Runnable observer=this::render;
+    @Override protected void onStart(){super.onStart();app.observar(observer);}
+    @Override protected void onStop(){app.dejarDeObservar(observer);super.onStop();}
+    private void render() {
+        content.removeAllViews();title(getString(R.string.reportes),"Consultá tus reportes guardados.");
         button(R.string.nuevo_reporte,v->{open(NewReportActivity.class);finish();});
         if(app.db.reportes().isEmpty()) card("Todavía no hay reportes. Creá el primero.");
         for(Report r:app.db.reportes()) {
