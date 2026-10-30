@@ -120,4 +120,117 @@ public class CampusDb extends SQLiteOpenHelper {
             c.moveToFirst();return c.getLong(0);
         }
     }
+    public boolean marcarSincronizado(String uuid) {
+        ContentValues values = new ContentValues();
+        values.put("sincronizado", 1);
+
+        return getWritableDatabase().update(
+                "reporte",
+                values,
+                "uuid=?",
+                new String[]{uuid}
+        ) == 1;
+    }
+    public List<JSONObject> reportesPendientesParaEnvio()
+            throws JSONException {
+
+        List<JSONObject> pendientes = new ArrayList<>();
+
+        String sql = "SELECT uuid, lugar_id, categoria_id, " +
+                "descripcion, fecha_creacion, anonimo, autor " +
+                "FROM reporte WHERE sincronizado=0 " +
+                "AND lugar_id>0 AND categoria_id>0 " +
+                "ORDER BY fecha_creacion ASC";
+
+        try (Cursor c = getReadableDatabase().rawQuery(sql, null)) {
+
+            while (c.moveToNext()) {
+                JSONObject reporte = new JSONObject();
+
+                reporte.put("uuid", c.getString(0));
+                reporte.put("lugarId", c.getLong(1));
+                reporte.put("categoriaId", c.getLong(2));
+                reporte.put("descripcion", c.getString(3));
+                reporte.put("fechaCreacion", c.getString(4));
+                reporte.put("anonimo", c.getInt(5) == 1);
+                reporte.put("autor", c.isNull(6)
+                        ? JSONObject.NULL : c.getString(6));
+
+                pendientes.add(reporte);
+            }
+        }
+
+        return pendientes;
+    }
+
+    public int guardarReportesServidor(JSONArray reportes)
+            throws JSONException {
+
+        SQLiteDatabase db = getWritableDatabase();
+        int nuevos = 0;
+
+        db.beginTransaction();
+
+        try {
+            for (int i = 0; i < reportes.length(); i++) {
+
+                JSONObject reporte = reportes.getJSONObject(i);
+                String uuid = reporte.getString("uuid");
+
+                boolean existe;
+
+                try (Cursor c = db.rawQuery(
+                        "SELECT uuid FROM reporte WHERE uuid=?",
+                        new String[]{uuid})) {
+
+                    existe = c.moveToFirst();
+                }
+
+                if (existe) {
+                    ContentValues estado = new ContentValues();
+                    estado.put("sincronizado", 1);
+
+                    db.update(
+                            "reporte",
+                            estado,
+                            "uuid=?",
+                            new String[]{uuid}
+                    );
+
+                    continue;
+                }
+
+                ContentValues values = new ContentValues();
+
+                values.put("uuid", uuid);
+                values.put("lugar_id", reporte.getLong("lugarId"));
+                values.put("categoria_id", reporte.getLong("categoriaId"));
+                values.put("descripcion",
+                        reporte.getString("descripcion"));
+                values.put("fecha_creacion",
+                        reporte.getString("fechaCreacion"));
+                values.put("anonimo",
+                        reporte.getBoolean("anonimo") ? 1 : 0);
+
+                if (reporte.isNull("autor")) {
+                    values.putNull("autor");
+                } else {
+                    values.put("autor", reporte.getString("autor"));
+                }
+
+                values.put("sincronizado", 1);
+
+                db.insertOrThrow("reporte", null, values);
+                nuevos++;
+            }
+
+            db.setTransactionSuccessful();
+
+        } finally {
+            db.endTransaction();
+        }
+
+        return nuevos;
+    }
+
 }
