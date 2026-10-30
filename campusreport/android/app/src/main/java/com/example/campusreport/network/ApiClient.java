@@ -132,4 +132,111 @@ public final class ApiClient {
         }
     }
 
+    public static JSONObject enviarReferenciaLocal(
+            JSONObject referencia) throws Exception {
+
+        String tipo = referencia.getString("tipo");
+        String endpoint;
+
+        if (tipo.equals("lugar")) {
+            endpoint = "/api/lugares";
+        } else if (tipo.equals("categoria")) {
+            endpoint = "/api/categorias";
+        } else {
+            throw new IllegalArgumentException(
+                    "Tipo de referencia desconocido"
+            );
+        }
+
+        JSONObject datos = new JSONObject();
+        datos.put("uuid", referencia.getString("uuid"));
+        datos.put("nombre", referencia.getString("nombre"));
+
+        HttpURLConnection con = (HttpURLConnection)
+                new URL(BASE_URL + endpoint).openConnection();
+
+        try {
+            con.setRequestMethod("POST");
+            con.setConnectTimeout(8000);
+            con.setReadTimeout(8000);
+            con.setDoOutput(true);
+
+            con.setRequestProperty(
+                    "Content-Type",
+                    "application/json; charset=utf-8"
+            );
+
+            con.setRequestProperty(
+                    "Accept",
+                    "application/json"
+            );
+
+            byte[] contenido = datos.toString()
+                    .getBytes(StandardCharsets.UTF_8);
+
+            try (OutputStream salida = con.getOutputStream()) {
+                salida.write(contenido);
+            }
+
+            int codigo = con.getResponseCode();
+
+            if (codigo != 200 && codigo != 201) {
+                throw new IOException(
+                        "Error al enviar referencia. HTTP " + codigo
+                );
+            }
+
+            try (InputStream entrada = con.getInputStream();
+                 ByteArrayOutputStream respuesta =
+                         new ByteArrayOutputStream()) {
+
+                byte[] buffer = new byte[4096];
+                int cantidad;
+
+                while ((cantidad = entrada.read(buffer)) != -1) {
+
+                    if (respuesta.size() + cantidad > 1048576) {
+                        throw new IOException(
+                                "Respuesta demasiado grande"
+                        );
+                    }
+
+                    respuesta.write(buffer, 0, cantidad);
+                }
+
+                JSONObject confirmado = new JSONObject(
+                        respuesta.toString(StandardCharsets.UTF_8.name())
+                );
+
+                if (!referencia.getString("uuid").equals(
+                        confirmado.getString("uuid"))) {
+
+                    throw new IOException(
+                            "El servidor no confirmó el UUID"
+                    );
+                }
+
+                if (!referencia.getString("nombre").equals(
+                        confirmado.getString("nombre"))) {
+
+                    throw new IOException(
+                            "El servidor devolvió otro nombre"
+                    );
+                }
+
+                if (confirmado.getLong("id") <= 0) {
+                    throw new IOException(
+                            "El servidor devolvió un ID inválido"
+                    );
+                }
+
+                return confirmado;
+            }
+
+        } finally {
+            con.disconnect();
+        }
+    }
+
+
 }

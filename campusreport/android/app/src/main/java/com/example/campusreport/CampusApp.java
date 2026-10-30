@@ -70,7 +70,7 @@ public class CampusApp extends Application {
         }
     }
 
-    // Descarga lugares y categorías
+    // Descargar lugares y categorías del servidor
     public void descargar() {
 
         if (descargando) return;
@@ -108,63 +108,96 @@ public class CampusApp extends Application {
         });
     }
 
-    // Sincronización en ambos sentidos
+    // Sincronización completa de CampusReport
     public void sincronizarReportes() {
 
         if (sincronizando) return;
 
         sincronizando = true;
-        resultado = "Sincronizando reportes...";
+        resultado = "Sincronizando datos...";
         avisar();
 
         io.execute(() -> {
 
-            int enviados = 0;
-            int descargados = 0;
+            int referenciasEnviadas = 0;
+            int reportesEnviados = 0;
+            int reportesDescargados = 0;
+
             String mensaje;
 
             try {
 
-                // 1. Actualizar lugares y categorías
+                // 1. Descargar catálogo del servidor
                 db.guardarCatalogo(
                         ApiClient.descargarCatalogo()
                 );
 
-                // 2. Obtener reportes pendientes de SQLite
+                // 2. Buscar lugares y categorías locales
+                List<JSONObject> referencias =
+                        db.referenciasLocalesPendientes();
+
+                // 3. Enviar referencias al servidor
+                for (JSONObject referencia : referencias) {
+
+                    JSONObject respuesta =
+                            ApiClient.enviarReferenciaLocal(
+                                    referencia
+                            );
+
+                    // Actualizar el ID temporal en SQLite
+                    db.confirmarReferenciaServidor(
+                            referencia.getString("tipo"),
+                            referencia.getLong("idLocal"),
+                            respuesta.getLong("id"),
+                            referencia.getString("uuid"),
+                            referencia.getString("nombre")
+                    );
+
+                    referenciasEnviadas++;
+                }
+
+                // 4. Buscar los reportes pendientes
                 List<JSONObject> pendientes =
                         db.reportesPendientesParaEnvio();
 
-                // 3. Enviar pendientes al servidor
+                // 5. Enviar los reportes al servidor
                 for (JSONObject reporte : pendientes) {
 
                     ApiClient.enviarReporte(reporte);
 
-                    boolean actualizado =
+                    boolean confirmado =
                             db.marcarSincronizado(
                                     reporte.getString("uuid")
                             );
 
-                    if (!actualizado) {
+                    if (!confirmado) {
                         throw new IllegalStateException(
-                                "No se pudo confirmar el reporte en SQLite"
+                                "No se pudo confirmar el reporte"
                         );
                     }
 
-                    enviados++;
+                    reportesEnviados++;
                 }
 
-                // 4. Descargar todos los reportes del servidor
+                // 6. Descargar reportes del servidor
                 JSONArray reportesServidor =
                         ApiClient.descargarReportes();
 
-                // 5. Guardar únicamente los nuevos en SQLite
-                descargados =
-                        db.guardarReportesServidor(reportesServidor);
+                // 7. Guardar reportes nuevos sin duplicarlos
+                reportesDescargados =
+                        db.guardarReportesServidor(
+                                reportesServidor
+                        );
 
                 mensaje = "Sincronización completada.\n"
-                        + "Enviados: " + enviados
-                        + "\nRecibidos nuevos: " + descargados
-                        + "\nPendientes: " + db.pendientes();
+                        + "Lugares/categorías enviados: "
+                        + referenciasEnviadas
+                        + "\nReportes enviados: "
+                        + reportesEnviados
+                        + "\nReportes recibidos nuevos: "
+                        + reportesDescargados
+                        + "\nPendientes: "
+                        + db.pendientes();
 
                 Log.i("CampusReport", mensaje);
 
@@ -174,8 +207,12 @@ public class CampusApp extends Application {
                         "Error durante la sincronización", e);
 
                 mensaje = "Sincronización incompleta.\n"
-                        + "Enviados confirmados: " + enviados
-                        + "\nPendientes: " + db.pendientes()
+                        + "Referencias confirmadas: "
+                        + referenciasEnviadas
+                        + "\nReportes confirmados: "
+                        + reportesEnviados
+                        + "\nPendientes: "
+                        + db.pendientes()
                         + "\nLos datos locales se conservaron.";
             }
 

@@ -233,4 +233,161 @@ public class CampusDb extends SQLiteOpenHelper {
         return nuevos;
     }
 
+    public List<JSONObject> referenciasLocalesPendientes()
+            throws JSONException {
+
+        List<JSONObject> pendientes = new ArrayList<>();
+
+        for (String tipo : new String[]{"lugar", "categoria"}) {
+
+            try (Cursor c = getReadableDatabase().query(
+                    tipo,
+                    new String[]{"id", "uuid", "nombre"},
+                    "id < 0 AND uuid IS NOT NULL",
+                    null, null, null, "id ASC")) {
+
+                while (c.moveToNext()) {
+
+                    JSONObject referencia = new JSONObject();
+
+                    referencia.put("tipo", tipo);
+                    referencia.put("idLocal", c.getLong(0));
+                    referencia.put("uuid", c.getString(1));
+                    referencia.put("nombre", c.getString(2));
+
+                    pendientes.add(referencia);
+                }
+            }
+        }
+
+        return pendientes;
+    }
+
+    public void confirmarReferenciaServidor(
+            String tipo,
+            long idLocal,
+            long idServidor,
+            String uuid,
+            String nombre) {
+
+        if ((!tipo.equals("lugar") && !tipo.equals("categoria"))
+                || idLocal >= 0 || idServidor <= 0
+                || uuid == null || nombre == null) {
+
+            throw new IllegalArgumentException(
+                    "Referencia invalida"
+            );
+        }
+
+        SQLiteDatabase sql = getWritableDatabase();
+        sql.beginTransaction();
+
+        try {
+
+            // Verificar que la referencia local sea la correcta
+            try (Cursor c = sql.query(
+                    tipo,
+                    new String[]{"uuid"},
+                    "id=?",
+                    new String[]{String.valueOf(idLocal)},
+                    null, null, null)) {
+
+                if (!c.moveToFirst()
+                        || !uuid.equals(c.getString(0))) {
+
+                    throw new IllegalStateException(
+                            "No coincide la referencia local"
+                    );
+                }
+            }
+
+            // Comprobar si el ID del servidor ya está en SQLite
+            boolean existe;
+            String uuidExistente = null;
+
+            try (Cursor c = sql.query(
+                    tipo,
+                    new String[]{"uuid"},
+                    "id=?",
+                    new String[]{String.valueOf(idServidor)},
+                    null, null, null)) {
+
+                existe = c.moveToFirst();
+
+                if (existe) {
+                    uuidExistente = c.getString(0);
+                }
+            }
+
+            if (existe && uuidExistente != null
+                    && !uuidExistente.equals(uuid)) {
+
+                throw new IllegalStateException(
+                        "El ID del servidor pertenece a otra referencia"
+                );
+            }
+
+            // Crear el registro con ID positivo si todavía no existe
+            if (!existe) {
+
+                ContentValues nuevo = new ContentValues();
+                nuevo.put("id", idServidor);
+                nuevo.put("nombre", nombre);
+
+                sql.insertOrThrow(tipo, null, nuevo);
+            }
+
+            // Actualizar los reportes para que usen el ID positivo
+            String columna = tipo.equals("lugar")
+                    ? "lugar_id" : "categoria_id";
+
+            ContentValues cambio = new ContentValues();
+            cambio.put(columna, idServidor);
+
+            sql.update(
+                    "reporte",
+                    cambio,
+                    columna + "=?",
+                    new String[]{String.valueOf(idLocal)}
+            );
+
+            // Eliminar la referencia temporal negativa
+            int eliminados = sql.delete(
+                    tipo,
+                    "id=?",
+                    new String[]{String.valueOf(idLocal)}
+            );
+
+            if (eliminados != 1) {
+                throw new IllegalStateException(
+                        "No se pudo actualizar la referencia local"
+                );
+            }
+
+            // Conservar el UUID original en el registro definitivo
+            ContentValues definitivo = new ContentValues();
+            definitivo.put("uuid", uuid);
+
+            if (sql.update(
+                    tipo,
+                    definitivo,
+                    "id=?",
+                    new String[]{String.valueOf(idServidor)}
+            ) != 1) {
+
+                throw new IllegalStateException(
+                        "No se pudo confirmar el ID del servidor"
+                );
+            }
+
+            sql.setTransactionSuccessful();
+
+        } finally {
+            sql.endTransaction();
+        }
+    }
+
+
+
+
 }
