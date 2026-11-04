@@ -3,6 +3,20 @@
 Aplicación Android para guardar y sincronizar lugares, categorías y reportes de mantenimiento.
 Roger Báez y Johan Escurra · Versión 0.4.0.
 
+## Entrega final
+La versión estable conserva el APK y el JAR 0.4.0. El 4 de noviembre se ejecutaron
+17 pruebas Android, 13 del backend y, por separado, 8 comprobaciones HTTP del servidor.
+El ensayo en Windows y las evidencias individuales corresponden a los integrantes.
+
+- [Documentos Word y presentación PowerPoint](docs/cierre/archivos).
+- [Documentación técnica y configuración de H2](docs/cierre/documentacion_tecnica.md).
+- [Resultados, demostración de 15 minutos y defensa individual](docs/cierre/pruebas_y_defensa.md).
+- [Evidencia por prueba y huellas de los binarios](docs/evidencias/cierre-pruebas.json).
+- [Resultados del servidor ejecutable](docs/evidencias/cierre-http.json).
+
+Para reproducir el paquete final desde un clon con historial:
+`python demo/package_final.py --demo CampusReport_Demostracion.zip --output CampusReport_Entrega_Final.zip`.
+
 ## Funcionalidades
 
 - **Lugares** y **Categorías**: consultar listas y **Guardar** registros sin conexión.

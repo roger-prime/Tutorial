@@ -1,0 +1,116 @@
+{
+  "fecha": "2026-11-04",
+  "version": "0.4.0",
+  "resumen": {
+    "android": 17,
+    "backend": 13,
+    "total": 30
+  },
+  "binarios_entregados": {
+    "CampusReport.apk": "578af92a84da5ecbb70f663c45dce9d57bf5f205637c0df7314d8e7551f74927",
+    "CampusReport_Servidor.jar": "079e20969d37dbc84ead02015c8097b8c01c77449ff82a60950916247813ceb9"
+  },
+  "entorno": "Linux, JDK 21, Robolectric API 28 y SQLite nativo. La prueba integrada usó el JAR del paquete de demostración. Sin emulador gráfico de Windows.",
+  "suites": [
+    {
+      "tipo": "Android",
+      "nombre": "com.example.campusreport.CampusDbLocalTest",
+      "pruebas": 6,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0,
+      "casos": [
+        "badDownloadRollsBackAndInvalidFormDoesNotInsert",
+        "downloadedCatalogAndTwoPendingReportsSurviveReopening",
+        "anonymousReportDoesNotStoreAProvidedName",
+        "namedReportValidatesAndPreservesName",
+        "savesLocalReferencesWithoutNetworkAndPreservesThemAfterDownload",
+        "migrationKeepsExistingReportsAndMarksThemAnonymous"
+      ]
+    },
+    {
+      "tipo": "Android",
+      "nombre": "com.example.campusreport.OfflineScreensTest",
+      "pruebas": 1,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0,
+      "casos": [
+        "opensPersistedReportFromListAndReadsDetailWithoutNetwork"
+      ]
+    },
+    {
+      "tipo": "Android",
+      "nombre": "com.example.campusreport.SyncHttpIntegrationTest",
+      "pruebas": 1,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0,
+      "casos": [
+        "completeCycleAgainstRealBackend"
+      ]
+    },
+    {
+      "tipo": "Android",
+      "nombre": "com.example.campusreport.SyncManagerTest",
+      "pruebas": 9,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0,
+      "casos": [
+        "serverRecordDownloadedOnceAndNeverReuploaded",
+        "invalidAcknowledgmentNeverConfirmsEvenIfGetReturnsRecord",
+        "offlineThreeRecordsSyncAndReopenWithoutDuplicates",
+        "migrationFromV2PreservesStableUuidAndSyncs",
+        "rejectedOneDoesNotBlockOtherAndDownloadCannotOverwritePending",
+        "lostResponseRetriesSameUuid",
+        "matchingServerReferenceMergesWithoutBreakingReports",
+        "malformedDownloadRollsBackEntireDownload",
+        "rejectedReferencesPreserveDependentReport"
+      ]
+    },
+    {
+      "tipo": "Backend",
+      "nombre": "com.example.campusreport.CatalogIntegrationTest",
+      "pruebas": 4,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0,
+      "casos": [
+        "categoriesEndpointWorks",
+        "reportTableAndForeignKeysExist",
+        "endpointReadsNewDatabaseRows",
+        "returnsCatalogFromDatabase"
+      ]
+    },
+    {
+      "tipo": "Backend",
+      "nombre": "com.example.campusreport.CatalogSyncIntegrationTest",
+      "pruebas": 4,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0,
+      "casos": [
+        "existingNameGetsCanonicalIdAndIndependentStableReceipt",
+        "referencesRetryWithoutDuplicatingAndRejectConflicts",
+        "invalidReferencesNeverWrite",
+        "referencesSupportReportsAndDownload"
+      ]
+    },
+    {
+      "tipo": "Backend",
+      "nombre": "com.example.campusreport.ReportIntegrationTest",
+      "pruebas": 5,
+      "fallos": 0,
+      "errores": 0,
+      "omitidas": 0,
+      "casos": [
+        "namedReportTrimsAndRequiresName",
+        "malformedJsonAndMissingReportHaveClearResponses",
+        "sameUuidDoesNotDuplicateAndDifferentContentConflicts",
+        "invalidFieldsAndUnknownReferencesAreRejected",
+        "anonymousJsonIsStoredWithoutNameAndCanBeRead"
+      ]
+    }
+  ]
+}

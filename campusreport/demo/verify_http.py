@@ -1,4 +1,5 @@
 """Prueba el JAR real en un puerto y H2 temporales; nunca modifica la base del usuario."""
+from datetime import date
 import argparse,json,os,socket,subprocess,tempfile,time,uuid,urllib.request,urllib.error
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--jar',type=Path,required=True);p.add_argument('--java',default='java');p.add_argument('--output',type=Path);a=p.parse_args()
@@ -47,6 +48,6 @@ with tempfile.TemporaryDirectory(prefix='campus-http-') as temp:
  finally:
   if process is not None:stop(process)
   log.close()
-result={'version':'0.4.0','fecha':'2026-10-30','entorno':'HTTP real y H2 temporal persistente','comprobaciones':checks}
+result={'version':'0.4.0','fecha':date.today().isoformat(),'entorno':'HTTP real y H2 temporal persistente','comprobaciones':checks}
 if a.output:a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
 print(json.dumps(result,ensure_ascii=False,indent=2))
