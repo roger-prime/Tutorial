@@ -1,45 +1,40 @@
-# Aportes identificables de Roger y Johan
+# Aportes y trazabilidad — CampusReport 0.4.0
 
-La consigna exige contribuciones identificables y defensa individual. La preparación asistida de esta
-base no reemplaza la participación de ambos integrantes. No atribuir cambios a quien no los realizó.
+Integrantes: Roger Báez y Johan Escurra. Este documento **registra evidencias de GitHub**, no asigna autoría por temas de exposición. Los desarrollos asistidos por IA deben distinguirse del trabajo que cada integrante ejecutó, comprendió y defendió.
 
-## Roger — propuesta de aporte real
+## Roger — rama principal 0.4.0
 
-Probar la app en su emulador y ajustar un texto o validación según lo observado. Agregar en
-`docs/prueba-roger.md` fecha, emulador utilizado, pasos, resultado real y problema encontrado si lo hubiera.
-Puede adjuntar una captura propia de Inicio y Lugares después de la descarga.
+La rama `campusreport-semana1` contiene el código funcional utilizado en esta entrega. Sus commits identificables bajo `roger-prime` incluyen:
+- `351e4566`: desarrollo offline, persistencia local y preparación de demo.
+- `ef603b95`: sincronización bidireccional con UUID estables, pruebas e idempotencia.
+- `f6293bbb`: pruebas offline, documentación técnica, PowerPoint, defensa y empaquetado original.
 
-## Johan — propuesta de aporte real
+La versión 0.4.0 registra en `docs/evidencias/cierre-pruebas.json` 17 pruebas Android y 13 backend, además de 8 comprobaciones HTTP en `cierre-http.json`, ejecutadas y documentadas el 4 de noviembre. Los hashes que constan allí pertenecen a los ejecutables de ese registro histórico.
 
-Ejecutar el backend, agregar un lugar real de la facultad a `backend/src/main/resources/data.sql`
-con un ID nuevo y actualizar la prueba que verifica la cantidad de lugares. Registrar en
-`docs/prueba-johan.md` el endpoint consultado y su resultado real. Una opción más pequeña es
-documentar una corrección real de configuración descubierta durante la instalación.
+## Johan — desarrollo anterior e integración final
 
-## Cómo registrar un aporte
+- Rama histórica `johan-backend` (código 0.3.0): avances anteriores de API y persistencia. **No se hizo una fusión ciega de sus controladores sobre 0.4.0**, porque la nueva rama ya implementaba las rutas y la sincronización.
+- `48005a9`: registro de APK y JAR compilados en Windows con sus respectivos hashes SHA-256.
+- `0e34dcc`: registro de una ejecución aprobada de `SyncHttpIntegrationTest` (1 prueba, sin fallos).
+- `c2ff288`, `8aa27df`, `4b946d2`: carga de documentos, diagramas y seis capturas reales del emulador.
+- `2daabb0` y posteriores: script PowerShell para generar la entrega, comprobaciones y documentación de trazabilidad.
 
-Cada uno configura Git con su identidad real, sin copiar la del compañero:
+Los documentos técnicos y los complementos se elaboraron **con asistencia de ChatGPT** y se incorporaron mediante GitHub; esto no equivale a reclamar autoría exclusiva del código 0.4.0.
 
-```text
-git config user.name "Tu nombre"
-git config user.email "Tu correo asociado a GitHub"
-git status
-git add ruta/del/archivo/modificado
-git commit -m "Describir el cambio real que realizaste"
-git pull --rebase
-git push
+## Cómo demostrar los aportes sin falsear la autoría
+
+En GitHub se pueden consultar las ramas y commits indicados. Para obtener el historial desde un clon:
+
+```powershell
+git log --format="%h %an %s" -- campusreport
+git log --oneline johan-backend -- campusreport
+git log --oneline campusreport-semana1 -- campusreport
 ```
 
-Si Johan no tiene permiso para subir, Roger debe invitar su cuenta desde Settings → Collaborators
-del repositorio, o Johan puede trabajar en un fork y abrir un pull request.
-Evitar modificar simultáneamente el mismo archivo. No subir `local.properties`, bases de datos,
-contraseñas, carpetas `build` o `target`.
+En la defensa, Roger puede explicar el recorrido Android → SQLite → Sincronización y Johan el backend, el contrato REST, las confirmaciones por UUID y las verificaciones que ejecutó. **Explicar una parte de la arquitectura no demuestra por sí solo que se programó toda esa parte**: vincular cada afirmación de autoría con su commit.
 
-## Preguntas para preparar la defensa
+## Distinción obligatoria entre binarios y pruebas
 
-1. ¿Por qué la app consulta SQLite y no directamente el servidor?
-2. ¿Qué diferencia hay entre un reporte pendiente y uno sincronizado?
-3. ¿Qué hace `10.0.2.2` en el emulador?
-4. ¿Por qué el trabajo de red se ejecuta fuera del hilo principal?
-5. ¿Por qué cada reporte conserva el mismo UUID al reintentar su envío?
-6. ¿Qué hace cada tabla y cómo se relacionan sus claves?
+Los hashes de la compilación de Johan son distintos de los del registro de Roger. Los resultados históricos de Roger respaldan su código y sus ejecutables; no certifican la identidad de los binarios compilados por Johan. La entrega auditada incluye `04_evidencias/ORIGEN_Y_HASHES_DE_PRUEBAS.txt` para dejarlo explícito.
+
+Quedan sin captura específica la pantalla de reporte pendiente y el mensaje de Sincronizar. El repositorio incluye seis capturas reales, sin inventar pruebas visuales adicionales.
