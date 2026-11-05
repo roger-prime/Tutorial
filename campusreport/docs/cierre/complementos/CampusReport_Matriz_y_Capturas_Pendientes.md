@@ -1,29 +1,33 @@
-# CampusReport — Matriz de cobertura y capturas pendientes
+# CampusReport — Matriz de cobertura y evidencia visual
 
-Anexo de control de la versión 0.4.0. Relaciona las acciones reales de Android con el documento técnico y define las capturas necesarias. **No contiene imágenes simuladas:** las capturas deben provenir del emulador de la versión entregada.
+Control actualizado de la versión 0.4.0. Incluye **seis capturas reales ya subidas** en [capturas](../capturas/README.md). El documento Word de matriz original fue creado antes del registro de esas imágenes y conserva la lista inicial de comprobaciones.
 
-| Pantalla / acciones | Apartado documento | Evidencia requerida |
+| Pantalla / acciones | Documento técnico | Evidencia actual |
 | --- | --- | --- |
-| Inicio: navegación y Sincronizar | §3 y §6 | Inicio con botones y contadores; mensaje tras sincronizar |
-| Lugares: Nombre / Guardar / Volver | §3 y §4 | Pantalla con lugar de ejemplo y formulario |
-| Categorías: Nombre / Guardar / Volver | §3 y §4 | Pantalla con categoría y formulario |
-| Nuevo reporte: Lugar / Categoría / Descripción | §3 y §6 | Formulario antes de guardar |
-| Reporte anónimo / Tu nombre | §3 y §6 | Formulario con opción anónima y otro con autor |
-| Reportes: lista y estados | §3 y §6 | Reporte pendiente y sincronizado |
-| Detalle: campos, fecha y estado | §3 y §6 | Detalle de un reporte guardado y reabierto |
+| Inicio: navegación y botón Sincronizar | §3 y §6 | ✅ [01_inicio.png](../capturas/01_inicio.png): pantalla de inicio; el mensaje específico de sincronización no se capturó |
+| Lugares: Nombre / Guardar / Volver | §3 y §4 | ✅ [02_lugares.png](../capturas/02_lugares.png) |
+| Categorías: Nombre / Guardar / Volver | §3 y §4 | ✅ [03_categorias.png](../capturas/03_categorias.png) |
+| Nuevo reporte: Lugar / Categoría / Descripción | §3 y §6 | ✅ [04_nuevo_reporte.png](../capturas/04_nuevo_reporte.png) |
+| Reporte anónimo / Tu nombre | §3 y §6 | ⚠️ Funciones documentadas; la captura del formulario no acredita por sí sola ambos modos |
+| Reportes: lista y estados | §3 y §6 | ✅ [08_reporte_sincronizado.png](../capturas/08_reporte_sincronizado.png); ⚠️ falta captura separada del estado pendiente |
+| Detalle: campos, fecha y estado | §3 y §6 | ✅ [06_detalle_reporte.png](../capturas/06_detalle_reporte.png) |
 
-Todas las capturas deben provenir del mismo APK y del mismo commit fuente de la entrega. No reutilizar capturas antiguas como evidencia de la versión final.
+## Pruebas automáticas y otras fuentes
 
-## Comprobaciones esenciales antes de entregar
+`docs/evidencias/cierre-pruebas.json` registra pruebas Android y backend; `docs/evidencias/integracion_http_johan.md` documenta una prueba HTTP integrada aprobada. Las pruebas funcionales y la experiencia visual del emulador son fuentes complementarias, no equivalentes.
 
-- Documento técnico principal de cinco páginas como máximo.
-- Los dos diagramas coinciden con SQLite v3 y H2 de la 0.4.0.
-- Cada botón o control visible queda explicado en el documento o manual.
-- Las capturas reales incluyen un caso pendiente y otro sincronizado.
-- El informe distingue pruebas automáticas de ensayos visuales.
-- APK y JAR que se entreguen coinciden con las huellas SHA-256 registradas.
-- No afirmar alojamiento público o conexión remota si el servidor sigue en 127.0.0.1.
+## Pendientes conocidos aceptados para esta entrega
 
-## Fuentes utilizadas
+- `05_reporte_pendiente.png` no existe en el repositorio.
+- `07_sincronizacion.png` no existe en el repositorio.
+- No indicar en la presentación ni en el documento que se adjuntaron ocho capturas.
+- No sustituir las capturas faltantes con ilustraciones o imágenes de otra versión.
 
-Repositorio roger-prime/Tutorial, rama campusreport-semana1 (commit f6293bb); rama campusreport-integracion-final; CampusDb.java, schema.sql, CatalogController.java, SyncManager.java, MainActivity.java y Activities asociadas; documentación de cierre de Roger.
+## Revisión final
+
+- Verificar que el documento técnico principal siga dentro del límite de cinco páginas.
+- Revisar que los dos diagramas coincidan con los esquemas SQLite v3 y H2 0.4.0.
+- Mantener coherencia entre binarios y hashes antes de empaquetar: los hashes originales de Roger difieren de los registrados por Johan.
+- Mantener las limitaciones reales del sistema: sin autenticación, edición de reportes ni sincronización periódica y servidor de desarrollo en `127.0.0.1:8080`.
+
+Documentación base: `campusreport-semana1` (commit f6293bb) y `campusreport-integracion-final`. 
