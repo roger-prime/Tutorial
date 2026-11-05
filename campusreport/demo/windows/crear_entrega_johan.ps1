@@ -4,8 +4,8 @@ $ErrorActionPreference = "Stop"
 $repo = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
 $proyecto = Join-Path $repo "campusreport"
 $documentos = Join-Path $env:USERPROFILE "Documents"
-$destino = Join-Path $documentos "CampusReport_Entrega_Verificada"
-$zipFinal = Join-Path $documentos "CampusReport_Entrega_Final_0_4_0.zip"
+$destino = Join-Path $documentos "CampusReport_Entrega_Verificada_Auditada"
+$zipFinal = Join-Path $documentos "CampusReport_Entrega_Final_0_4_0_Auditada.zip"
 
 $rama = (& git -C $repo branch --show-current).Trim()
 if ($rama -ne "campusreport-integracion-final") {
@@ -69,6 +69,29 @@ Copy-Item -LiteralPath (Join-Path $proyecto "docs\evidencias\integracion_http_jo
 Copy-Item -LiteralPath (Join-Path $proyecto "docs\evidencias\cierre-pruebas.json") -Destination $evidencias
 Copy-Item -LiteralPath (Join-Path $proyecto "docs\evidencias\cierre-http.json") -Destination $evidencias
 
+@"
+ACLARACION SOBRE EL ORIGEN DE LAS PRUEBAS — CampusReport 0.4.0
+
+Este paquete contiene ejecutables compilados por Johan.
+APK SHA256: $shaAPK
+JAR SHA256: $shaJAR
+Fuente funcional: rama campusreport-semana1, commit f6293bb (sin cambios de codigo
+posteriores en campusreport-integracion-final).
+
+Los archivos cierre-pruebas.json y cierre-http.json contienen resultados historicos
+registrados por Roger el 04/11/2026. Sus binarios tienen OTROS HASHES:
+APK (Roger): 578AF92A84DA5ECBB70F663C45DCE9D57BF5F205637C0DF7314D8E7551F74927
+JAR (Roger): 079E20969D37DBC84EAD02015C8097B8C01C77449FF82A60950916247813CEB9
+
+Las 17 pruebas Android, 13 de backend y 8 verificaciones HTTP de Roger
+respaldan ese codigo fuente y su compilacion original, pero NO fueron
+re-ejecutadas sobre los ejecutables con hashes de Johan.
+Johan registro en integracion_http_johan.md una prueba HTTP integrada
+aprobada y los hashes de su compilacion en compilacion_johan.md.
+Esta distincion evita atribuir resultados de un ejecutable a otro.
+"@ | Set-Content -Path (Join-Path $evidencias "ORIGEN_Y_HASHES_DE_PRUEBAS.txt") -Encoding UTF8
+
+
 $capturas = @(Get-ChildItem -Path (Join-Path $docs "capturas") -Filter "*.png")
 if ($capturas.Count -ne 6) {
     throw "Se esperaban seis capturas reales, pero hay $($capturas.Count). Revisa el directorio antes de entregar."
@@ -115,6 +138,52 @@ if (Test-Path -LiteralPath $zipFinal) {
     throw "Ya existe $zipFinal. Conserva la version previa y renombrala antes de crear otra."
 }
 Compress-Archive -Path (Join-Path $destino "*") -DestinationPath $zipFinal
+# Verificacion del ZIP final: rutas normalizadas y hashes del APK/JAR dentro del archivo.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zipAbierto = [System.IO.Compression.ZipFile]::OpenRead($zipFinal)
+try {
+    $nombres = @($zipAbierto.Entries | ForEach-Object { $_.FullName -replace '\\','/' })
+    $requeridos = @(
+        "01_ejecutables/CampusReport.apk",
+        "01_ejecutables/CampusReport_Servidor.jar",
+        "02_fuentes/CampusReport_Fuentes.zip",
+        "03_documentacion/CampusReport_Documentacion_Tecnica_Actualizada.docx",
+        "03_documentacion/CampusReport_Presentacion_Final.pptx",
+        "03_documentacion/CampusReport_Pruebas_y_Defensa.docx",
+        "04_evidencias/ORIGEN_Y_HASHES_DE_PRUEBAS.txt"
+    )
+    $faltantes = @($requeridos | Where-Object { $_ -notin $nombres })
+    if ($faltantes.Count -gt 0) { throw "ZIP incompleto: $($faltantes -join ', ')" }
+    $inZipCapturas = @($nombres | Where-Object { $_ -match '^03_documentacion/capturas/.*\.png
+Write-Host ""
+Write-Host "PAQUETE FINAL PREPARADO:" -ForegroundColor Green
+Write-Host $zipFinal
+Write-Host "Commit GitHub: $commit"
+Write-Host "Capturas: $($capturas.Count)"
+Write-Host "Archivos esenciales: 0 faltantes; hashes APK/JAR dentro del ZIP comprobados."
+Write-Host "SHA256 del ZIP: $zipHash"
+ })
+    if ($inZipCapturas.Count -ne 6) { throw "Cantidad de capturas incorrecta: $($inZipCapturas.Count)" }
+    foreach ($par in @(
+        @("01_ejecutables/CampusReport.apk", $esperadoAPK),
+        @("01_ejecutables/CampusReport_Servidor.jar", $esperadoJAR)
+    )) {
+        $item = $zipAbierto.Entries | Where-Object {
+            ($_.FullName -replace '\\','/') -eq $par[0]
+        } | Select-Object -First 1
+        if (-not $item) { throw "Falta dentro del ZIP: $($par[0])" }
+        $flujo = $item.Open()
+        try {
+            $sha256 = [System.Security.Cryptography.SHA256]::Create()
+            try { $huella = [System.BitConverter]::ToString($sha256.ComputeHash($flujo)).Replace('-','') }
+            finally { $sha256.Dispose() }
+        }
+        finally { $flujo.Dispose() }
+        if ($huella -ne $par[1]) { throw "Hash incorrecto dentro del ZIP: $($par[0])" }
+    }
+}
+finally { $zipAbierto.Dispose() }
+
 $zipHash = (Get-FileHash -LiteralPath $zipFinal -Algorithm SHA256).Hash
 Write-Host ""
 Write-Host "PAQUETE FINAL PREPARADO:" -ForegroundColor Green
