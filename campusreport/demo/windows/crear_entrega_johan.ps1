@@ -164,14 +164,15 @@ Write-Host "Archivos esenciales: 0 faltantes; hashes APK/JAR dentro del ZIP comp
 Write-Host "SHA256 del ZIP: $zipHash"
  })
     if ($inZipCapturas.Count -ne 6) { throw "Cantidad de capturas incorrecta: $($inZipCapturas.Count)" }
-    foreach ($par in @(
-        @("01_ejecutables/CampusReport.apk", $esperadoAPK),
-        @("01_ejecutables/CampusReport_Servidor.jar", $esperadoJAR)
-    )) {
+    $binariosValidar = @(
+        @{ ruta = "01_ejecutables/CampusReport.apk"; esperado = $esperadoAPK },
+        @{ ruta = "01_ejecutables/CampusReport_Servidor.jar"; esperado = $esperadoJAR }
+    )
+    foreach ($par in $binariosValidar) {
         $item = $zipAbierto.Entries | Where-Object {
-            ($_.FullName -replace '\\','/') -eq $par[0]
+            ($_.FullName -replace '\\','/') -eq $par.ruta
         } | Select-Object -First 1
-        if (-not $item) { throw "Falta dentro del ZIP: $($par[0])" }
+        if (-not $item) { throw "Falta dentro del ZIP: $($par.ruta)" }
         $flujo = $item.Open()
         try {
             $sha256 = [System.Security.Cryptography.SHA256]::Create()
@@ -179,7 +180,7 @@ Write-Host "SHA256 del ZIP: $zipHash"
             finally { $sha256.Dispose() }
         }
         finally { $flujo.Dispose() }
-        if ($huella -ne $par[1]) { throw "Hash incorrecto dentro del ZIP: $($par[0])" }
+        if ($huella -ne $par.esperado) { throw "Hash incorrecto dentro del ZIP: $($par.ruta)" }
     }
 }
 finally { $zipAbierto.Dispose() }
