@@ -3,6 +3,22 @@
 Aplicación Android para guardar y sincronizar lugares, categorías y reportes de mantenimiento.
 Roger Báez y Johan Escurra · Versión 0.4.0.
 
+## Ruta de entrega auditada (Johan · 5/11/2026)
+
+Esta rama conserva **el código funcional 0.4.0 de Roger**, con documentación y evidencias adicionales de Johan. El paquete actual de Johan se crea con `demo/windows/crear_entrega_johan.ps1`, no con `demo/package_final.py` (este último exige los hashes históricos de los binarios de Roger).
+
+En Windows, desde el directorio `Tutorial`, ejecutar:
+
+```powershell
+git switch campusreport-integracion-final
+git pull --ff-only origin campusreport-integracion-final
+powershell -ExecutionPolicy Bypass -File .\campusreport\demo\windows\crear_entrega_johan.ps1
+```
+
+El script prepara `Documentos/CampusReport_Entrega_Final_0_4_0_Auditada.zip`, valida los SHA-256 de los ejecutables **dentro del ZIP** y agrega una aclaración de las diferencias frente a los registros históricos de Roger. No modifica la app ni borra bases de datos.
+
+El documento técnico corregido de cuatro páginas y la matriz de cobertura están en `docs/cierre/complementos`. Hay seis capturas auténticas en `docs/cierre/capturas`. No hay capturas separadas de reporte pendiente ni del mensaje de sincronización.
+
 ## Entrega final
 La versión estable conserva el APK y el JAR 0.4.0. El 4 de noviembre se ejecutaron
 17 pruebas Android, 13 del backend y, por separado, 8 comprobaciones HTTP del servidor.
